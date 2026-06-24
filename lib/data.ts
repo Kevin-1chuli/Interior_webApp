@@ -1,7 +1,3 @@
-import {
-  Award, CheckCircle, MessageSquare, PenTool,
-  Settings, Sparkles, Shield, ThumbsUp,
-} from "lucide-react";
 import type { CatId, Prod } from "./types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -100,17 +96,17 @@ export const SVC_CARDS = [
 ];
 
 export const JOURNEY = [
-  { n:"01", Icon:MessageSquare, title:"Consultation",   desc:"We understand your vision, lifestyle, and budget through a deep listening session.",                    pid:"1608303588026-884930af2559" },
-  { n:"02", Icon:PenTool,       title:"Design Concept", desc:"Mood boards, floor plans and 3D renders so you see the transformation before anything is built.",      pid:"1557243962-0a093922933f"   },
-  { n:"03", Icon:Settings,      title:"Production",     desc:"Skilled craftsmen in our Kampala workshop build every piece using premium hardwoods.",                  pid:"1547609434-b732edfee020"   },
-  { n:"04", Icon:CheckCircle,   title:"Installation",   desc:"Our team delivers, installs and walks you through every element—with full after-care support.",         pid:"1598928506311-c55ded91a20c"},
+  { n:"01", title:"Consultation",   desc:"We understand your vision, lifestyle, and budget through a deep listening session.",                    pid:"1608303588026-884930af2559" },
+  { n:"02", title:"Design Concept", desc:"Mood boards, floor plans and 3D renders so you see the transformation before anything is built.",      pid:"1557243962-0a093922933f"   },
+  { n:"03", title:"Production",     desc:"Skilled craftsmen in our Kampala workshop build every piece using premium hardwoods.",                  pid:"1547609434-b732edfee020"   },
+  { n:"04", title:"Installation",   desc:"Our team delivers, installs and walks you through every element—with full after-care support.",         pid:"1598928506311-c55ded91a20c"},
 ];
 
 export const STATS = [
-  { n:"200+", label:"Projects Completed", Icon:Award    },
-  { n:"100%", label:"Custom Crafted",     Icon:Sparkles  },
-  { n:"5 yr",  label:"Quality Guarantee", Icon:Shield   },
-  { n:"98%",  label:"Client Satisfaction",Icon:ThumbsUp },
+  { n:"200+", label:"Projects Completed" },
+  { n:"100%", label:"Custom Crafted"     },
+  { n:"5 yr",  label:"Quality Guarantee" },
+  { n:"98%",  label:"Client Satisfaction"},
 ];
 
 // ─── Materials per product (by ID) ───────────────────────────────────────────

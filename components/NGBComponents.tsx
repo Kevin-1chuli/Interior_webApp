@@ -22,6 +22,7 @@ import {
   CATS, HERO_SLIDES, JOURNEY, MATERIALS, PRODS,
   SPACES, STATS, SVC_CARDS,
 } from "@/lib/data";
+import { JOURNEY_ICONS, STATS_ICONS } from "@/lib/icons";
 
 export function NGBLogo({ compact=false, inv=false }: { compact?:boolean; inv?:boolean }) {
   const stroke = inv ? "white"                    : CHARCOAL;
@@ -545,7 +546,9 @@ export function StatsStrip() {
     <section style={{ backgroundColor:CHARCOAL, paddingTop:56, paddingBottom:56 }}>
       <div className="max-w-6xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {STATS.map(({ n, label, Icon })=>(
+          {STATS.map(({ n, label }, idx)=>{
+            const Icon = STATS_ICONS[idx];
+            return (
             <div key={label} className="text-center">
               <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor:"rgba(184,147,74,0.15)" }}>
                 <Icon size={20} color={GOLD} />
@@ -553,7 +556,7 @@ export function StatsStrip() {
               <p style={{ fontFamily:DISPLAY, fontSize:"2.2rem", fontWeight:700, color:"white", lineHeight:1 }}>{n}</p>
               <p style={{ fontFamily:SANS, fontSize:"0.62rem", letterSpacing:"0.14em", textTransform:"uppercase", color:GOLD_LIGHT, marginTop:6 }}>{label}</p>
             </div>
-          ))}
+          )})}
         </div>
       </div>
     </section>
