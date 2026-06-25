@@ -30,9 +30,6 @@ export function NGBLogo({ compact=false, inv=false }: { compact?:boolean; inv?:b
   const sub    = inv ? "rgba(255,255,255,0.45)"   : MID;
 
   if (compact) {
-    // ── Navbar: horizontal mark + wordmark in a single SVG ──────────────────
-    // Outer rect (3,3)→(42,42)  Inner rect (12,12)→(51,51)
-    // Offset = 9 = 24% of rect-width 38 ✓
     return (
       <svg
         viewBox="0 0 158 50"
@@ -40,11 +37,8 @@ export function NGBLogo({ compact=false, inv=false }: { compact?:boolean; inv?:b
         aria-label="NGB Interior Concepts & Craft"
         style={{ display:"block", flexShrink:0 }}
       >
-        {/* Geometric mark */}
         <rect x="3"  y="3"  width="38" height="38" fill={fill} stroke={stroke} strokeWidth="3"/>
         <rect x="12" y="12" width="38" height="38" fill={fill} stroke={stroke} strokeWidth="3"/>
-
-        {/* "ngb" wordmark — sits to the right of the mark */}
         <text
           x="60" y="30"
           fontFamily="'Montserrat', sans-serif"
@@ -52,8 +46,6 @@ export function NGBLogo({ compact=false, inv=false }: { compact?:boolean; inv?:b
           fill={stroke}
           letterSpacing="-0.3"
         >ngb</text>
-
-        {/* Tagline */}
         <text
           x="60" y="43"
           fontFamily="'Montserrat', sans-serif"
@@ -65,10 +57,6 @@ export function NGBLogo({ compact=false, inv=false }: { compact?:boolean; inv?:b
     );
   }
 
-  // ── Full logo: mark with embedded "ngb" + tagline (footer / brand) ─────────
-  // Outer rect (4,4)→(92,92)  Inner rect (26,26)→(114,114)
-  // Offset = 22 = 25% of rect-width 88 ✓
-  // "ngb" sits at the staircase step, bottom-right of outer rect
   return (
     <svg
       viewBox="0 0 185 148"
@@ -76,11 +64,8 @@ export function NGBLogo({ compact=false, inv=false }: { compact?:boolean; inv?:b
       aria-label="NGB Interior Concepts & Craft"
       style={{ display:"block" }}
     >
-      {/* Geometric mark */}
       <rect x="4"  y="4"  width="88" height="88" fill={fill} stroke={stroke} strokeWidth="5.5"/>
       <rect x="26" y="26" width="88" height="88" fill={fill} stroke={stroke} strokeWidth="5.5"/>
-
-      {/* "ngb" overlapping the staircase step — bottom-right corner */}
       <text
         x="76" y="113"
         fontFamily="'Montserrat', sans-serif"
@@ -88,8 +73,6 @@ export function NGBLogo({ compact=false, inv=false }: { compact?:boolean; inv?:b
         fill={stroke}
         letterSpacing="-0.4"
       >ngb</text>
-
-      {/* Tagline centred below the mark */}
       <text
         x="92" y="141"
         textAnchor="middle"
@@ -144,7 +127,6 @@ export function ShowroomCard({ p, fav, onFav, onView }: { p:Prod; fav:boolean; o
         style={{ transform:h?"scale(1.06)":"scale(1)", transition:`transform 0.6s ${EASE_OUT}`, opacity:0.9 }} />
       <div className="absolute inset-0" style={{ background:"linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.22) 45%, transparent 70%)" }} />
 
-      {/* Heart — stop propagation so it doesn't trigger onView */}
       <button onClick={e=>{e.stopPropagation();onFav(p.id);}} className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center"
         style={{ backgroundColor:"rgba(255,255,255,0.9)", backdropFilter:"blur(6px)", transition:"transform 0.2s ease", transform:fav?"scale(1.15)":"scale(1)" }}
         aria-label="Toggle favourite">
@@ -199,11 +181,12 @@ export function ProductCard({ p, fav, onFav, onView }: { p:Prod; fav:boolean; on
 }
 
 // ─── See All Card — appears as last item in every carousel ───────────────────
+// FIX 3: navigate to /furniture/${catId} instead of just catId
 export function SeeAllCard({ catId, name, onNavigate }: { catId:CatId; name:string; onNavigate:(p:string)=>void }) {
   const [h, setH] = useState(false);
   return (
     <button
-      onClick={()=>onNavigate(catId)}
+      onClick={()=>onNavigate(`/furniture/${catId}`)}
       onMouseEnter={()=>setH(true)}
       onMouseLeave={()=>setH(false)}
       className="w-full flex flex-col items-center justify-center"
@@ -252,7 +235,6 @@ export function SliderArrow({ dir, onClick, hidden }: { dir:"prev"|"next"; onCli
         transform:`translateY(-50%) ${dir==="prev"?"translateX(-50%)":"translateX(50%)"}`,
         cursor:"pointer",
         transition:`all 0.22s ${EASE_OUT}`,
-        // Smoothly fade in/out when hidden
         opacity: hidden ? 0 : 1,
         pointerEvents: hidden ? "none" : "auto",
       }}
@@ -265,6 +247,7 @@ export function SliderArrow({ dir, onClick, hidden }: { dir:"prev"|"next"; onCli
 }
 
 // ─── CategorySlider — scroll-based, advances 2 cards per click ───────────────
+// FIX 4: "See all" button navigates to /furniture/${catId}
 export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
   catId:CatId; bg?:string; fav:Set<number>; onFav:(id:number)=>void; onNavigate:(p:string)=>void; onView:(p:Prod)=>void;
 }) {
@@ -281,7 +264,6 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
     setCanNext(el.scrollLeft < el.scrollWidth - el.clientWidth - 8);
   };
 
-  // Advance by 2 cards = half the container width
   const scrollCards = (dir:"prev"|"next") => {
     const el = scrollRef.current;
     if (!el) return;
@@ -294,14 +276,13 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
     <section style={{ backgroundColor:sectionBg, paddingTop:10, paddingBottom:10 }}>
       <div className="max-w-6xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
 
-        {/* Section header */}
         <div className="flex items-center justify-between mb-2">
           <div>
             <p style={{ fontFamily:SANS, fontSize:"0.5rem", letterSpacing:"0.22em", textTransform:"uppercase", color:GOLD, marginBottom:3, fontWeight:600 }}>Collection</p>
             <h2 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.1rem,2vw,1.5rem)", fontWeight:600, color:CHARCOAL, lineHeight:1.15 }}>{cat.name}</h2>
           </div>
           <button
-            onClick={()=>onNavigate(catId)}
+            onClick={()=>onNavigate(`/furniture/${catId}`)}
             className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
             style={{ fontFamily:SANS, fontSize:"0.7rem", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", color:CHARCOAL, background:"none", border:"none", cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3 }}>
             See all <ArrowRight size={13} />
@@ -312,7 +293,6 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
         <div className="hidden lg:block relative">
           <SliderArrow dir="prev" onClick={()=>scrollCards("prev")} hidden={!canPrev} />
 
-          {/* Edge fade hints */}
           {canPrev && (
             <div className="absolute top-0 left-0 bottom-0 z-10 pointer-events-none"
               style={{ width:72, background:`linear-gradient(to right, ${sectionBg} 20%, transparent)` }} />
@@ -322,7 +302,6 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
               style={{ width:72, background:`linear-gradient(to left, ${sectionBg} 20%, transparent)` }} />
           )}
 
-          {/* Scrollable track — cards + SeeAllCard at end */}
           <div
             ref={scrollRef}
             onScroll={onScroll}
@@ -338,7 +317,6 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
                 <ShowroomCard p={p} fav={fav.has(p.id)} onFav={onFav} onView={onView} />
               </div>
             ))}
-            {/* See All card terminates the carousel */}
             <div style={{ flex:"0 0 calc(25% - 12px)" }}>
               <SeeAllCard catId={catId} name={cat.name} onNavigate={onNavigate} />
             </div>
@@ -357,7 +335,6 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
               <ShowroomCard p={p} fav={fav.has(p.id)} onFav={onFav} onView={onView} />
             </div>
           ))}
-          {/* See All card at end of mobile carousel */}
           <div className="flex-none" style={{ width:"calc(50% - 8px)", scrollSnapAlign:"start" }}>
             <SeeAllCard catId={catId} name={cat.name} onNavigate={onNavigate} />
           </div>
@@ -384,13 +361,11 @@ export function ServiceCard({ title, sub, pid, nav, onNavigate }: { title:string
         transition:`all 0.28s ${EASE_OUT}`,
       }}
     >
-      {/* Compact landscape image */}
       <div style={{ height:72, overflow:"hidden", position:"relative", background:CHARCOAL }}>
         <img src={img(pid,400,144)} alt={title} className="w-full h-full object-cover"
           style={{ opacity:h?0.6:0.78, transform:h?"scale(1.06)":"scale(1)", transition:`all 0.55s ${EASE_OUT}` }} />
         <div style={{ position:"absolute", inset:0, background:"linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 70%)" }} />
       </div>
-      {/* Text below */}
       <div style={{ padding:"9px 11px 11px", backgroundColor:h?CHARCOAL:WHITE, transition:`background-color 0.28s ${EASE_OUT}` }}>
         <h3 style={{ fontFamily:DISPLAY, fontSize:"0.88rem", fontWeight:600, color:h?"white":CHARCOAL, marginBottom:2 }}>{title}</h3>
         <p style={{ fontFamily:BODY, fontSize:"0.68rem", fontWeight:300, color:h?"rgba(255,255,255,0.6)":MID, lineHeight:1.4, marginBottom:6 }}>{sub}</p>
@@ -403,10 +378,11 @@ export function ServiceCard({ title, sub, pid, nav, onNavigate }: { title:string
 }
 
 // ─── Compact category card for the right column ───────────────────────────────
+// FIX 8: navigate to /furniture/${cat.id}
 export function CollectionMiniCard({ cat, onNavigate }: { cat:typeof CATS[0]; onNavigate:(p:string)=>void }) {
   const [h,setH] = useState(false);
   return (
-    <button onClick={()=>onNavigate(cat.id)} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
+    <button onClick={()=>onNavigate(`/furniture/${cat.id}`)} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
       className="relative overflow-hidden w-full text-left"
       style={{ height:72, borderRadius:8, background:CHARCOAL, border:"none", cursor:"pointer",
         boxShadow:h?"0 4px 16px rgba(0,0,0,0.18)":"0 1px 6px rgba(0,0,0,0.08)",
@@ -427,13 +403,10 @@ export function ServicesAndCollections({ onNavigate }: { onNavigate:(p:string)=>
   return (
     <section style={{ backgroundColor:WHITE, paddingTop:32, paddingBottom:32 }}>
       <div className="max-w-6xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
-
-        {/* Services — full width, 4 cards in a row */}
         <SectionHdr eyebrow="What We Do" heading="How can we help you today?" tight />
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
           {SVC_CARDS.map(s=><ServiceCard key={s.title} {...s} onNavigate={onNavigate} />)}
         </div>
-
       </div>
     </section>
   );
@@ -458,7 +431,8 @@ export function SpaceCard({ name, tag, pid, tall }: { name:string; tag:string; p
   );
 }
 
-export function SpacesShowcase() {
+// FIX 5: SpacesShowcase "View All Projects" now accepts and calls onNavigate
+export function SpacesShowcase({ onNavigate }: { onNavigate:(p:string)=>void }) {
   return (
     <section style={{ backgroundColor:CHARCOAL, paddingTop:40, paddingBottom:48 }}>
       <div className="max-w-6xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
@@ -487,7 +461,7 @@ export function SpacesShowcase() {
         </div>
 
         <div className="mt-6">
-          <OutlineBtn>View All Projects</OutlineBtn>
+          <OutlineBtn onClick={()=>onNavigate("/projects")}>View All Projects</OutlineBtn>
         </div>
       </div>
     </section>
@@ -503,7 +477,6 @@ export function DesignJourney() {
       <div className="max-w-6xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
         <SectionHdr eyebrow="Our Process" heading="The NGB Design Journey" sub="A seamless, fully managed experience — from vision to reality." />
 
-        {/* Step tabs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
           {JOURNEY.map((j,i)=>{
             const active = step===i;
@@ -518,7 +491,6 @@ export function DesignJourney() {
           })}
         </div>
 
-        {/* Active step */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div className="overflow-hidden" style={{ borderRadius:14, aspectRatio:"16/9" }}>
             <img src={img(s.pid,900,510)} alt={s.title} className="w-full h-full object-cover"
@@ -597,7 +569,6 @@ export function ContactSection({ id }: { id?:string }) {
             </div>
           </div>
 
-          {/* Quick inquiry form */}
           <div style={{ backgroundColor:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:12, padding:32 }}>
             <h3 style={{ fontFamily:DISPLAY, fontSize:"1.3rem", fontWeight:600, color:"white", marginBottom:20 }}>Request a Free Consultation</h3>
             <div className="space-y-4">
@@ -624,88 +595,238 @@ export function ContactSection({ id }: { id?:string }) {
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 const NAV_LINKS = [
-  { label:"Home",            id:"home"      },
-  { label:"Furniture",       id:"furniture" },
-  { label:"Interior Design", id:"contact"   },
-  { label:"Projects",        id:"contact"   },
-  { label:"Contact",         id:"contact"   },
+  { label: "Home",            id: "home"            },
+  { label: "Furniture",       id: "furniture"       },
+  { label: "Interior Design", id: "interior-design" },
+  { label: "Projects",        id: "projects"        },
+  { label: "Contact",         id: "contact"         },
 ];
 
-export function Navbar({ active, onNav, openDrawer, cart, openSearch }: { active:string; onNav:(p:string)=>void; openDrawer:()=>void; cart:number; openSearch:()=>void }) {
+export function Navbar({
+  active,
+  onNav,
+  openDrawer,
+  cart,
+  openSearch,
+}: {
+  active: string;
+  onNav: (p: string) => void;
+  openDrawer: () => void;
+  cart: number;
+  openSearch: () => void;
+}) {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white" style={{ height:68, boxShadow:"0 1px 0 rgba(0,0,0,0.07),0 2px 18px rgba(0,0,0,0.04)" }}>
-      <div className="max-w-6xl mx-auto h-full flex items-center justify-between" style={{ paddingInline:"clamp(1.25rem,4vw,3rem)" }}>
-
-        {/* Left: hamburger + logo */}
+    <header
+      className="fixed top-0 left-0 right-0 z-50 bg-white"
+      style={{
+        height: 68,
+        boxShadow:
+          "0 1px 0 rgba(0,0,0,0.07),0 2px 18px rgba(0,0,0,0.04)",
+      }}
+    >
+      <div
+        className="max-w-6xl mx-auto h-full flex items-center justify-between"
+        style={{ paddingInline: "clamp(1.25rem,4vw,3rem)" }}
+      >
+        {/* Left */}
         <div className="flex items-center gap-3">
-          <button onClick={openDrawer} className="hover:opacity-60 transition-opacity" style={{ color:CHARCOAL }} aria-label="Open menu">
+          <button
+            onClick={openDrawer}
+            className="hover:opacity-60 transition-opacity"
+            style={{ color: CHARCOAL }}
+            aria-label="Open menu"
+          >
             <Menu size={22} />
           </button>
-          <button onClick={()=>onNav("home")} className="hover:opacity-75 transition-opacity" aria-label="Home">
+
+          {/* Logo navigates to home */}
+          <button
+            onClick={() => onNav("home")}
+            className="hover:opacity-75 transition-opacity"
+            aria-label="Home"
+          >
             <NGBLogo compact />
           </button>
         </div>
 
-        {/* Centre: desktop nav */}
+        {/* Centre */}
         <nav className="hidden xl:flex items-center gap-8">
-          {NAV_LINKS.map(({ label, id })=>(
-            <button key={label} onClick={()=>onNav(id)} style={{ fontFamily:SANS, fontSize:"0.7rem", letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:600, color:active===id?GOLD:MID, borderTop:"none", borderLeft:"none", borderRight:"none", borderBottom:`1.5px solid ${active===id?GOLD:"transparent"}`, paddingBottom:2, transition:"all 0.2s ease", cursor:"pointer", background:"none" }}>
+          {NAV_LINKS.map(({ label, id }) => (
+            <button
+              key={label}
+              onClick={() => onNav(id)}
+              style={{
+                fontFamily: SANS,
+                fontSize: "0.7rem",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                fontWeight: 600,
+                color: active === id ? GOLD : MID,
+                borderBottom: `1.5px solid ${
+                  active === id ? GOLD : "transparent"
+                }`,
+                paddingBottom: 2,
+                transition: "all 0.2s ease",
+                cursor: "pointer",
+                background: "none",
+              }}
+            >
               {label}
             </button>
           ))}
         </nav>
 
-        {/* Right: search + cart */}
+        {/* Right */}
         <div className="flex items-center gap-4">
-          <button onClick={openSearch} className="hover:opacity-60 transition-opacity" style={{ color:CHARCOAL }} aria-label="Search"><Search size={20} /></button>
-          <button className="relative hover:opacity-60 transition-opacity" style={{ color:CHARCOAL }} aria-label="Wishlist">
+          <button
+            onClick={openSearch}
+            className="hover:opacity-60 transition-opacity"
+            style={{ color: CHARCOAL }}
+            aria-label="Search"
+          >
+            <Search size={20} />
+          </button>
+
+          <button
+            className="relative hover:opacity-60 transition-opacity"
+            style={{ color: CHARCOAL }}
+            aria-label="Wishlist"
+          >
             <ShoppingBag size={20} />
-            {cart>0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-white flex items-center justify-center" style={{ fontSize:"0.52rem", fontFamily:SANS, fontWeight:700, backgroundColor:GOLD }}>{cart}</span>}
+            {cart > 0 && (
+              <span
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-white flex items-center justify-center"
+                style={{
+                  fontSize: "0.52rem",
+                  fontFamily: SANS,
+                  fontWeight: 700,
+                  backgroundColor: GOLD,
+                }}
+              >
+                {cart}
+              </span>
+            )}
           </button>
         </div>
-
       </div>
     </header>
   );
 }
 
 // ─── Hamburger Drawer (slides from left) ─────────────────────────────────────
-export function HamburgerDrawer({ open, onClose, onNav }: { open:boolean; onClose:()=>void; onNav:(p:string)=>void }) {
+export function HamburgerDrawer({
+  open,
+  onClose,
+  onNav,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onNav: (p: string) => void;
+}) {
   const items = [
-    { id:"home",      label:"Home"            },
-    { id:"furniture", label:"Furniture"       },
-    { id:"contact",   label:"Interior Design" },
-    { id:"contact",   label:"Projects"        },
-    { id:"contact",   label:"Contact Us"      },
-    ...CATS.map(c=>({ id:c.id, label:c.name })),
+    { id: "home",            label: "Home"            },
+    { id: "furniture",       label: "Furniture"       },
+    { id: "interior-design", label: "Interior Design" },
+    { id: "projects",        label: "Projects"        },
+    { id: "contact",         label: "Contact Us"      },
+    ...CATS.map((c) => ({
+      id: c.id,
+      label: c.name,
+    })),
   ];
 
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose}
-        style={{ backgroundColor:"rgba(0,0,0,0.55)", backdropFilter:open?"blur(4px)":"none", opacity:open?1:0, pointerEvents:open?"auto":"none", transition:`opacity 0.35s ${EASE_OUT}` }} />
-      <div className="fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-white" style={{ width:"min(340px,50vw)", transform:open?"translateX(0)":"translateX(-100%)", transition:`transform 0.4s ${EASE_OUT}`, boxShadow:"6px 0 40px rgba(0,0,0,0.18)" }}>
-        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor:"rgba(0,0,0,0.07)" }}>
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+        style={{
+          backgroundColor: "rgba(0,0,0,0.55)",
+          backdropFilter: open ? "blur(4px)" : "none",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 0.35s ease-out",
+        }}
+      />
+
+      <div
+        className="fixed top-0 left-0 bottom-0 z-50 flex flex-col bg-white"
+        style={{
+          width: "min(340px,50vw)",
+          transform: open ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.4s ease-out",
+          boxShadow: "6px 0 40px rgba(0,0,0,0.18)",
+        }}
+      >
+        <div
+          className="flex items-center justify-between px-6 py-5 border-b"
+          style={{ borderColor: "rgba(0,0,0,0.07)" }}
+        >
           <NGBLogo compact />
-          <button onClick={onClose} className="hover:opacity-60 transition-opacity" style={{ color:CHARCOAL }}><X size={22} /></button>
+          <button
+            onClick={onClose}
+            style={{ color: CHARCOAL, background: "none", border: "none" }}
+          >
+            <X size={22} />
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4">
-          {items.map(({ id, label }, i)=>(
-            <button key={`${id}-${i}`} onClick={()=>{ onNav(id); onClose(); }}
-              className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-secondary transition-colors duration-150">
-              <span style={{ fontFamily:SANS, fontSize:"0.84rem", fontWeight:500, letterSpacing:"0.05em", color:label==="Contact Us"?GOLD:CHARCOAL }}>{label}</span>
-              <ChevronRight size={14} style={{ color:"#ccc" }} />
+          {items.map(({ id, label }, i) => (
+            <button
+              key={`${id}-${i}`}
+              onClick={() => {
+                onNav(id);
+                onClose();
+              }}
+              className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-secondary transition-colors"
+            >
+              <span
+                style={{
+                  fontFamily: SANS,
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  letterSpacing: "0.05em",
+                  color: CHARCOAL,
+                }}
+              >
+                {label}
+              </span>
+              <ChevronRight size={14} style={{ color: "#ccc" }} />
             </button>
           ))}
         </nav>
 
-        <div className="px-6 py-5 border-t space-y-3" style={{ borderColor:"rgba(0,0,0,0.07)" }}>
-          <a href="https://wa.me/256782042866" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2.5 w-full py-3 rounded font-semibold"
-            style={{ fontFamily:SANS, fontSize:"0.76rem", letterSpacing:"0.08em", backgroundColor:"#25D366", color:"white", borderRadius:4 }}>
+        <div
+          className="px-6 py-5 border-t space-y-3"
+          style={{ borderColor: "rgba(0,0,0,0.07)" }}
+        >
+          <a
+            href="https://wa.me/256782042866"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2.5 w-full py-3"
+            style={{
+              fontFamily: SANS,
+              backgroundColor: "#25D366",
+              color: "white",
+              borderRadius: 4,
+            }}
+          >
             <PhoneCall size={15} /> WhatsApp Us
           </a>
-          <p style={{ fontFamily:BODY, fontSize:"0.74rem", color:MID, lineHeight:1.7, fontWeight:300 }}>📞 +256 782042866<br />📞 +256 785644830<br />✉️ ngbinteriors@gmail.com</p>
+          <p
+            style={{
+              fontFamily: BODY,
+              fontSize: "0.74rem",
+              color: MID,
+              lineHeight: 1.7,
+            }}
+          >
+            📞 +256 782042866<br />
+            📞 +256 785644830<br />
+            ✉️ ngbinteriors@gmail.com
+          </p>
         </div>
       </div>
     </>
@@ -755,7 +876,6 @@ export function Hero({ onShop, onDesign }: { onShop:()=>void; onDesign:()=>void 
   return (
     <section style={{ position:"relative", height:"42vh", minHeight:320, background:CHARCOAL, overflow:"hidden" }}>
 
-      {/* Sliding photo stack — crossfade between slides */}
       {HERO_SLIDES.map((s, i) => (
         <div key={s.pid} style={{ position:"absolute", inset:0, transition:"opacity 1.4s ease-in-out", opacity:i===current?1:0, zIndex:i===current?1:0 }}>
           <img
@@ -770,10 +890,8 @@ export function Hero({ onShop, onDesign }: { onShop:()=>void; onDesign:()=>void 
         </div>
       ))}
 
-      {/* Dark gradient overlay — always on top of photos */}
       <div style={{ position:"absolute", inset:0, zIndex:2, background:"linear-gradient(to bottom,rgba(4,4,4,0.25) 0%,rgba(4,4,4,0.6) 55%,rgba(4,4,4,0.88) 100%)" }} />
 
-      {/* Before / After badge — top right */}
       <div style={{ position:"absolute", top:14, right:16, zIndex:4, display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4 }}>
         <span style={{
           padding:"3px 10px", borderRadius:20,
@@ -784,7 +902,6 @@ export function Hero({ onShop, onDesign }: { onShop:()=>void; onDesign:()=>void 
         <span style={{ fontFamily:BODY, fontSize:"0.6rem", fontWeight:300, color:"rgba(255,255,255,0.7)" }}>{slide.project}</span>
       </div>
 
-      {/* Slide dot indicators — bottom centre */}
       <div style={{ position:"absolute", bottom:14, left:"50%", transform:"translateX(-50%)", zIndex:4, display:"flex", gap:6 }}>
         {HERO_SLIDES.map((_, i) => (
           <button key={i} onClick={()=>setCurrent(i)} style={{
@@ -796,7 +913,6 @@ export function Hero({ onShop, onDesign }: { onShop:()=>void; onDesign:()=>void 
         ))}
       </div>
 
-      {/* Text content */}
       <div style={{ position:"absolute", inset:0, zIndex:3, display:"flex", alignItems:"center", justifyContent:"center" }}>
         <div style={{ textAlign:"center", padding:"0 1.5rem", maxWidth:520 }}>
           <p style={{ fontFamily:SANS, fontSize:"0.54rem", letterSpacing:"0.36em", textTransform:"uppercase", color:GOLD_LIGHT, marginBottom:10, fontWeight:600 }}>NGB Interiors</p>
@@ -818,6 +934,7 @@ export function Hero({ onShop, onDesign }: { onShop:()=>void; onDesign:()=>void 
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
+// FIX 6: Collections links now navigate to /furniture/${c.id}
 export function Footer({ onNav }: { onNav:(p:string)=>void }) {
   return (
     <footer style={{ backgroundColor:"#0d0d0d" }}>
@@ -838,7 +955,7 @@ export function Footer({ onNav }: { onNav:(p:string)=>void }) {
           <div>
             <p style={{ fontFamily:SANS, fontSize:"0.58rem", letterSpacing:"0.2em", textTransform:"uppercase", color:GOLD_LIGHT, marginBottom:12 }}>Collections</p>
             {CATS.map(c=>(
-              <p key={c.id} onClick={()=>onNav(c.id)} style={{ fontFamily:BODY, fontSize:"0.8rem", fontWeight:300, color:"rgba(255,255,255,0.42)", marginBottom:8, cursor:"pointer" }}>{c.name}</p>
+              <p key={c.id} onClick={()=>onNav(`/furniture/${c.id}`)} style={{ fontFamily:BODY, fontSize:"0.8rem", fontWeight:300, color:"rgba(255,255,255,0.42)", marginBottom:8, cursor:"pointer" }}>{c.name}</p>
             ))}
           </div>
         </div>
@@ -856,54 +973,116 @@ export function Footer({ onNav }: { onNav:(p:string)=>void }) {
 }
 
 // ─── Category Page ────────────────────────────────────────────────────────────
-export function CategoryPage({ catId, fav, onFav, onView }: { catId:CatId; fav:Set<number>; onFav:(id:number)=>void; onView:(p:Prod)=>void }) {
-  const cat = CATS.find(c=>c.id===catId)!;
-  const products = PRODS[catId];
-  const [sort,setSort] = useState("featured");
+export function CategoryPage({
+  catId,
+  fav,
+  onFav,
+  onView,
+}: {
+  catId: CatId;
+  fav: Set<number>;
+  onFav: (id: number) => void;
+  onView: (p: Prod) => void;
+}) {
+  const cat = CATS.find((c) => c.id === catId);
 
-  const sorted = [...products].sort((a,b)=>{
-    if (sort==="price-asc")  return parseInt(a.price.replace(/\D/g,""))-parseInt(b.price.replace(/\D/g,""));
-    if (sort==="price-desc") return parseInt(b.price.replace(/\D/g,""))-parseInt(a.price.replace(/\D/g,""));
-    if (sort==="rating")     return b.rating-a.rating;
+  if (!cat) {
+    return (
+      <div style={{ padding: 40 }}>
+        <h2>Category not found</h2>
+      </div>
+    );
+  }
+
+  const products = PRODS[catId] || [];
+  const [sort, setSort] = useState("featured");
+
+  const sorted = [...products].sort((a, b) => {
+    const priceA = parseInt(a.price.replace(/\D/g, ""));
+    const priceB = parseInt(b.price.replace(/\D/g, ""));
+    if (sort === "price-asc") return priceA - priceB;
+    if (sort === "price-desc") return priceB - priceA;
+    if (sort === "rating") return b.rating - a.rating;
     return 0;
   });
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero banner */}
-      <div className="relative flex items-center justify-center" style={{ height:180, background:CHARCOAL }}>
-        <img src={img(cat.pid,1600,500)} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" style={{ opacity:0.38 }} />
-        <div className="absolute inset-0" style={{ background:"linear-gradient(to bottom,rgba(0,0,0,0.18) 0%,rgba(0,0,0,0.65) 100%)" }} />
-        <div className="relative text-center z-10 px-6 w-full" style={{ zIndex:2 }}>
-          <div className="flex items-center justify-center max-w-6xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
-            <div className="text-center">
-              <h1 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.2rem,3vw,2rem)", fontWeight:700, color:"white", lineHeight:1.1 }}>{cat.name}</h1>
-              <p style={{ fontFamily:BODY, fontSize:"0.72rem", fontWeight:300, color:"rgba(255,255,255,0.5)", marginTop:4 }}>{products.length} pieces</p>
-            </div>
-          </div>
+      <div
+        className="relative flex items-center justify-center"
+        style={{ height: 180, background: CHARCOAL }}
+      >
+        <img
+          src={img(cat.pid, 1600, 500)}
+          alt={cat.name}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ opacity: 0.38 }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom,rgba(0,0,0,0.18) 0%,rgba(0,0,0,0.65) 100%)",
+          }}
+        />
+        <div className="relative text-center z-10 px-6 w-full">
+          <h1
+            style={{
+              fontFamily: DISPLAY,
+              fontSize: "clamp(1.2rem,3vw,2rem)",
+              fontWeight: 700,
+              color: "white",
+            }}
+          >
+            {cat.name}
+          </h1>
+          <p
+            style={{
+              fontFamily: BODY,
+              fontSize: "0.72rem",
+              color: "rgba(255,255,255,0.5)",
+              marginTop: 4,
+            }}
+          >
+            {products.length} pieces
+          </p>
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="bg-white border-b" style={{ borderColor:"rgba(0,0,0,0.07)" }}>
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4 py-4" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
-          <p style={{ fontFamily:BODY, fontSize:"0.8rem", color:MID, fontWeight:300 }}>Showing {products.length} results</p>
-          <div className="flex items-center gap-3">
-            <label style={{ fontFamily:SANS, fontSize:"0.64rem", letterSpacing:"0.1em", textTransform:"uppercase", color:MID }}>Sort by:</label>
-            <select value={sort} onChange={e=>setSort(e.target.value)} style={{ fontFamily:BODY, color:CHARCOAL, borderColor:"rgba(0,0,0,0.14)", outline:"none", padding:"8px 12px", fontSize:"0.82rem", border:"1px solid rgba(0,0,0,0.14)", borderRadius:4 }}>
-              <option value="featured">Featured</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-              <option value="rating">Top Rated</option>
-            </select>
-          </div>
+      <div className="bg-white border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4 py-4">
+          <p style={{ fontFamily: BODY, fontSize: "0.8rem", color: MID }}>
+            Showing {products.length} results
+          </p>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            style={{
+              fontFamily: BODY,
+              border: "1px solid rgba(0,0,0,0.14)",
+              padding: "8px 12px",
+              borderRadius: 4,
+            }}
+          >
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
+          </select>
         </div>
       </div>
 
-      {/* Product grid */}
-      <div className="max-w-6xl mx-auto py-14" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
+      <div className="max-w-6xl mx-auto py-14">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sorted.map(p=><ProductCard key={p.id} p={p} fav={fav.has(p.id)} onFav={onFav} onView={onView} />)}
+          {sorted.map((p) => (
+            <ProductCard
+              key={p.id}
+              p={p}
+              fav={fav.has(p.id)}
+              onFav={onFav}
+              onView={onView}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -911,59 +1090,70 @@ export function CategoryPage({ catId, fav, onFav, onView }: { catId:CatId; fav:S
 }
 
 // ─── Furniture Page (/furniture) — all category discovery sliders ─────────────
-export function FurniturePage({ fav, onFav, onNavigate, onView }: { fav:Set<number>; onFav:(id:number)=>void; onNavigate:(p:string)=>void; onView:(p:Prod)=>void }) {
+export function FurniturePage({
+  fav,
+  onFav,
+  onNavigate,
+  onView,
+}: {
+  fav: Set<number>;
+  onFav: (id: number) => void;
+  onNavigate: (p: string) => void;
+  onView: (p: Prod) => void;
+}) {
   return (
     <div>
-      {/* Page header strip */}
-      <div style={{ backgroundColor:CHARCOAL, paddingTop:28, paddingBottom:22, textAlign:"center" }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <p style={{ fontFamily:SANS, fontSize:"0.54rem", letterSpacing:"0.28em", textTransform:"uppercase", color:GOLD_LIGHT, marginBottom:6, fontWeight:600 }}>
-            NGB Interiors
-          </p>
-          <h1 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.5rem,3vw,2.2rem)", fontWeight:700, color:"white", lineHeight:1.12 }}>
-            Our Collections
-          </h1>
-        </div>
+      <div style={{ backgroundColor: CHARCOAL, padding: 28, textAlign: "center" }}>
+        <h1 style={{ fontFamily: DISPLAY, color: "white" }}>
+          Our Collections
+        </h1>
       </div>
 
-      {/* Sticky category nav */}
-      <div className="sticky top-[68px] z-30 border-b" style={{ backgroundColor:WHITE, borderColor:"rgba(0,0,0,0.07)" }}>
-        <div className="max-w-6xl mx-auto flex gap-1 overflow-x-auto py-3" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)", scrollbarWidth:"none" }}>
-          {CATS.map(cat=>(
-            <a key={cat.id} href={`#cat-${cat.id}`}
-              className="flex-none px-4 py-2 rounded-full text-xs font-semibold uppercase transition-all duration-200 hover:bg-secondary"
-              style={{ fontFamily:SANS, letterSpacing:"0.1em", color:MID, whiteSpace:"nowrap", textDecoration:"none" }}>
+      <div
+        className="sticky top-[68px] z-30 border-b"
+        style={{ backgroundColor: WHITE }}
+      >
+        <div className="max-w-6xl mx-auto flex gap-2 overflow-x-auto py-3">
+          {CATS.map((cat) => (
+            <a
+              key={cat.id}
+              href={`#cat-${cat.id}`}
+              style={{
+                fontFamily: SANS,
+                padding: "8px 12px",
+                whiteSpace: "nowrap",
+                textDecoration: "none",
+                color: MID,
+              }}
+            >
               {cat.label}
             </a>
           ))}
         </div>
       </div>
 
-      {/* Six category sliders, alternating backgrounds */}
       <div id="cat-beds">
-        <CategorySlider catId="beds"          bg={WHITE}   fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="beds" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
       </div>
       <div id="cat-sofas">
-        <CategorySlider catId="sofas"         bg={CREAM}   fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="sofas" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
       </div>
       <div id="cat-wardrobes">
-        <CategorySlider catId="wardrobes"     bg={WHITE}   fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="wardrobes" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
       </div>
       <div id="cat-tv-units">
-        <CategorySlider catId="tv-units"      bg={CREAM}   fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="tv-units" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
       </div>
       <div id="cat-dining">
-        <CategorySlider catId="dining"        bg={WHITE}   fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="dining" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
       </div>
       <div id="cat-coffee-tables">
-        <CategorySlider catId="coffee-tables" bg={CREAM}   fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="coffee-tables" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
       </div>
     </div>
   );
 }
 
-// ─── Root App ─────────────────────────────────────────────────────────────────
-// ─── Product Detail Modal ─────────────────────────────────────────────────────
 // ─── Custom order data ────────────────────────────────────────────────────────
 const WOOD_OPTIONS = ["Solid Mahogany","African Teak","White Oak","Walnut","Reclaimed Pine","Painted MDF"];
 const FINISH_OPTIONS = [
@@ -1049,7 +1239,6 @@ export function CustomOrderPanel({ prod, onBack, onClose }: { prod:Prod; onBack:
 
   return (
     <div className="flex flex-col flex-1 overflow-y-auto p-6">
-      {/* Header row */}
       <div className="flex items-center justify-between mb-5">
         <button onClick={onBack} className="flex items-center gap-1.5 hover:opacity-60 transition-opacity"
           style={{ fontFamily:SANS, fontSize:"0.65rem", letterSpacing:"0.1em", color:MID, background:"none", border:"none", cursor:"pointer" }}>
@@ -1064,12 +1253,10 @@ export function CustomOrderPanel({ prod, onBack, onClose }: { prod:Prod; onBack:
       <h3 style={{ fontFamily:DISPLAY, fontSize:"1.3rem", fontWeight:700, color:CHARCOAL, marginBottom:4 }}>{prod.name}</h3>
       <p style={{ fontFamily:BODY, fontSize:"0.76rem", color:MID, fontWeight:300, marginBottom:20 }}>Customise every detail — we build it exactly to your spec.</p>
 
-      {/* Wood / Frame */}
       <FormRow label="Wood / Frame Material">
         {WOOD_OPTIONS.map(w=><PillSel key={w} label={w} active={wood===w} onClick={()=>setWood(wood===w?"":w)} />)}
       </FormRow>
 
-      {/* Colour / Finish */}
       <FormRow label="Colour / Finish">
         {FINISH_OPTIONS.map(f=>(
           <div key={f.label} style={{ display:"flex", flexDirection:"column" as const, alignItems:"center", gap:3 }}>
@@ -1079,12 +1266,10 @@ export function CustomOrderPanel({ prod, onBack, onClose }: { prod:Prod; onBack:
         ))}
       </FormRow>
 
-      {/* Upholstery */}
       <FormRow label="Upholstery Fabric">
         {FABRIC_OPTIONS.map(f=><PillSel key={f} label={f} active={fabric===f} onClick={()=>{ setFabric(f); if(f==="None") setFabColor(""); }} />)}
       </FormRow>
 
-      {/* Upholstery colour — only if fabric chosen */}
       {fabric !== "None" && (
         <FormRow label="Upholstery Colour">
           {FABRIC_COLORS.map(c=>(
@@ -1096,7 +1281,6 @@ export function CustomOrderPanel({ prod, onBack, onClose }: { prod:Prod; onBack:
         </FormRow>
       )}
 
-      {/* Size */}
       <FormRow label="Size">
         {SIZE_OPTIONS.map(s=><PillSel key={s} label={s} active={size===s} onClick={()=>setSize(s)} />)}
       </FormRow>
@@ -1106,7 +1290,6 @@ export function CustomOrderPanel({ prod, onBack, onClose }: { prod:Prod; onBack:
           style={{ width:"100%", fontFamily:BODY, fontSize:"0.82rem", padding:"8px 12px", border:"1px solid rgba(0,0,0,0.15)", borderRadius:6, outline:"none", marginBottom:16, color:CHARCOAL }} />
       )}
 
-      {/* Quantity */}
       <FormRow label="Quantity">
         <div style={{ display:"flex", alignItems:"center", gap:0, border:"1px solid rgba(0,0,0,0.15)", borderRadius:8, overflow:"hidden" }}>
           <button onClick={()=>setQty(q=>Math.max(1,q-1))} style={{ padding:"6px 14px", fontFamily:SANS, fontSize:"1rem", background:"none", border:"none", cursor:"pointer", color:CHARCOAL }}>−</button>
@@ -1115,7 +1298,6 @@ export function CustomOrderPanel({ prod, onBack, onClose }: { prod:Prod; onBack:
         </div>
       </FormRow>
 
-      {/* Notes */}
       <div style={{ marginBottom:20 }}>
         <p style={{ fontFamily:SANS, fontSize:"0.58rem", letterSpacing:"0.16em", textTransform:"uppercase", color:CHARCOAL, fontWeight:600, marginBottom:8 }}>Additional Notes</p>
         <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
@@ -1123,7 +1305,6 @@ export function CustomOrderPanel({ prod, onBack, onClose }: { prod:Prod; onBack:
           style={{ width:"100%", fontFamily:BODY, fontSize:"0.82rem", padding:"10px 12px", border:"1px solid rgba(0,0,0,0.15)", borderRadius:6, outline:"none", resize:"none", color:CHARCOAL }} />
       </div>
 
-      {/* Order via WhatsApp */}
       <button onClick={handleOrder}
         className="flex items-center justify-center gap-2.5 py-4 w-full font-semibold mt-auto"
         style={{ fontFamily:SANS, fontSize:"0.76rem", letterSpacing:"0.1em", backgroundColor:"#25D366", color:"white", border:"none", borderRadius:6, cursor:"pointer" }}>
@@ -1147,7 +1328,6 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
         style={{ maxHeight:"92vh" }}
         onClick={e=>e.stopPropagation()}>
 
-        {/* Product image — always visible on left / top */}
         <div className="flex-none lg:w-5/12" style={{ aspectRatio:"4/3", minHeight:190, background:CHARCOAL, position:"relative" }}>
           <img src={img(prod.pid,700,530)} alt={prod.name} className="w-full h-full object-cover" />
           <button onClick={()=>onFav(prod.id)}
@@ -1155,7 +1335,6 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
             style={{ backgroundColor:"rgba(255,255,255,0.9)", backdropFilter:"blur(4px)", border:"none", cursor:"pointer" }}>
             <Heart size={17} fill={fav?"#e53e3e":"none"} stroke={fav?"#e53e3e":"#555"} />
           </button>
-          {/* Badge showing which panel is active */}
           <div className="absolute bottom-3 left-3">
             <span style={{ fontFamily:SANS, fontSize:"0.54rem", letterSpacing:"0.14em", textTransform:"uppercase", color:"white", backgroundColor:"rgba(0,0,0,0.55)", padding:"3px 8px", borderRadius:20 }}>
               {showCustom ? "Custom Order" : "Product Details"}
@@ -1163,7 +1342,6 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
           </div>
         </div>
 
-        {/* Right panel — toggles between details and custom form */}
         {showCustom
           ? <CustomOrderPanel prod={prod} onBack={()=>setShowCustom(false)} onClose={onClose} />
           : (
@@ -1177,7 +1355,6 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
               <p style={{ fontFamily:SANS, fontSize:"1rem", fontWeight:700, color:GOLD, marginBottom:12 }}>{prod.price}</p>
               <p style={{ fontFamily:BODY, fontSize:"0.83rem", fontWeight:300, lineHeight:1.75, color:MID, marginBottom:16 }}>{prod.desc}</p>
 
-              {/* Materials tags */}
               {mats.length > 0 && (
                 <div style={{ marginBottom:16 }}>
                   <p style={{ fontFamily:SANS, fontSize:"0.58rem", letterSpacing:"0.14em", textTransform:"uppercase", color:CHARCOAL, fontWeight:600, marginBottom:8 }}>Materials &amp; Finish</p>
@@ -1189,13 +1366,11 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
                 </div>
               )}
 
-              {/* Rating */}
               <div className="flex items-center gap-1 mb-6">
                 {[1,2,3,4,5].map(n=><Star key={n} size={13} fill={n<=Math.floor(prod.rating)?GOLD:"none"} stroke={n<=Math.floor(prod.rating)?GOLD:"#ccc"} />)}
                 <span style={{ fontFamily:BODY, fontSize:"0.74rem", color:MID, marginLeft:4 }}>{prod.rating} / 5</span>
               </div>
 
-              {/* CTAs */}
               <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:"auto" }}>
                 <a href={`https://wa.me/256782042866?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2.5 py-3.5"
@@ -1217,7 +1392,6 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
 }
 
 // ─── Search Overlay ───────────────────────────────────────────────────────────
-// Maps common search terms to category IDs
 const CAT_ALIASES: Record<string, CatId> = {
   bed:"beds", beds:"beds",
   sofa:"sofas", sofas:"sofas", couch:"sofas", lounge:"sofas",
@@ -1230,13 +1404,13 @@ const CAT_ALIASES: Record<string, CatId> = {
 function resolveCategory(q: string): CatId | null {
   const t = q.trim().toLowerCase();
   if (CAT_ALIASES[t]) return CAT_ALIASES[t];
-  // partial match
   for (const [key, id] of Object.entries(CAT_ALIASES)) {
     if (t.includes(key) || key.includes(t)) return id;
   }
   return null;
 }
 
+// FIX 7: category navigation in search uses /furniture/${matchedCat}
 export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
   onClose:()=>void; fav:Set<number>; onFav:(id:number)=>void; onView:(p:Prod)=>void; onNavigate:(p:string)=>void;
 }) {
@@ -1254,11 +1428,10 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
   const handleEnter = () => {
     if (!q) return;
     if (matchedCat) {
-      onNavigate(matchedCat);
+      onNavigate(`/furniture/${matchedCat}`);
       onClose();
       return;
     }
-    // If exactly one result, open it directly
     if (results.length === 1) {
       onView(results[0]);
       onClose();
@@ -1278,7 +1451,6 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)" }}
       onClick={onClose}>
       <div className="w-full" style={{ backgroundColor:"white" }} onClick={e=>e.stopPropagation()}>
-        {/* Search bar */}
         <div className="max-w-3xl mx-auto flex items-center gap-3 px-5 py-4">
           <Search size={20} style={{ color:MID, flexShrink:0 }} />
           <input
@@ -1292,7 +1464,6 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
           <button onClick={onClose} style={{ color:MID, background:"none", border:"none", cursor:"pointer" }}><X size={20} /></button>
         </div>
 
-        {/* Enter-to-navigate hint */}
         {matchedCat && (
           <div className="max-w-3xl mx-auto px-5 pb-3 flex items-center gap-2">
             <span style={{ fontFamily:SANS, fontSize:"0.62rem", color:MID }}>Press</span>
@@ -1302,7 +1473,6 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
         )}
       </div>
 
-      {/* Results */}
       <div className="flex-1 overflow-y-auto" onClick={e=>e.stopPropagation()}>
         <div className="max-w-3xl mx-auto px-5 py-6">
           {q.length < 2 && (
