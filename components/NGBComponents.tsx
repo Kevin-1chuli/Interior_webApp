@@ -7,7 +7,7 @@ import {
   ChevronRight, ChevronLeft, Phone, Mail, MapPin,
   PhoneCall, CheckCircle, MessageSquare, PenTool,
   Settings, Award, Sparkles, Shield, ThumbsUp, Star,
-  Home, Armchair,
+  Home, Armchair, Upload,
 } from "lucide-react";
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────────
