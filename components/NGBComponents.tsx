@@ -608,12 +608,14 @@ export function Navbar({
   openDrawer,
   cart,
   openSearch,
+  openWishlist,
 }: {
   active: string;
   onNav: (p: string) => void;
   openDrawer: () => void;
   cart: number;
   openSearch: () => void;
+  openWishlist: () => void;
 }) {
   return (
     <header
@@ -688,6 +690,7 @@ export function Navbar({
           </button>
 
           <button
+            onClick={openWishlist}
             className="relative hover:opacity-60 transition-opacity"
             style={{ color: CHARCOAL }}
             aria-label="Wishlist"
@@ -2025,7 +2028,7 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
   const handleEnter = () => {
     if (!q) return;
     if (matchedCat) {
-      onNavigate(`/furniture/${matchedCat}`);
+      onNavigate(matchedCat); // Pass category ID directly, routePathFor will handle it
       onClose();
       return;
     }
@@ -2110,5 +2113,243 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
         </div>
       </div>
     </div>
+  );
+}
+
+
+// ─── Wishlist Panel ───────────────────────────────────────────────────────────
+
+export function WishlistPanel({ 
+  open, 
+  onClose, 
+  fav, 
+  onFav, 
+  onView, 
+  onNavigate 
+}: {
+  open: boolean;
+  onClose: () => void;
+  fav: Set<number>;
+  onFav: (id: number) => void;
+  onView: (p: Prod) => void;
+  onNavigate: (p: string) => void;
+}) {
+  const allProducts = getAllProducts();
+  const favProducts = allProducts.filter((p) => fav.has(p.id));
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+        style={{
+          backgroundColor: "rgba(0,0,0,0.5)",
+          backdropFilter: open ? "blur(4px)" : "none",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transition: "opacity 0.3s ease-out",
+        }}
+      />
+
+      {/* Panel */}
+      <div
+        className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-white"
+        style={{
+          width: "min(420px, 85vw)",
+          transform: open ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.4s ease-out",
+          boxShadow: "-6px 0 40px rgba(0,0,0,0.18)",
+        }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-6 py-5 border-b"
+          style={{ borderColor: "rgba(0,0,0,0.07)" }}
+        >
+          <div>
+            <h2 style={{ fontFamily: DISPLAY, fontSize: "1.4rem", fontWeight: 600, color: CHARCOAL }}>
+              Your Wishlist
+            </h2>
+            <p style={{ fontFamily: SANS, fontSize: "0.75rem", color: MID, marginTop: 4 }}>
+              {favProducts.length} {favProducts.length === 1 ? "item" : "items"}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ color: CHARCOAL, background: "none", border: "none", cursor: "pointer" }}
+            aria-label="Close wishlist"
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {favProducts.length === 0 ? (
+            <div style={{ textAlign: "center", paddingTop: 60 }}>
+              <div style={{ 
+                width: 80, 
+                height: 80, 
+                borderRadius: "50%", 
+                margin: "0 auto 20px", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                backgroundColor: CREAM_D 
+              }}>
+                <Heart size={36} color={MID} />
+              </div>
+              <h3 style={{ fontFamily: DISPLAY, fontSize: "1.2rem", fontWeight: 600, color: CHARCOAL, marginBottom: 8 }}>
+                Your wishlist is empty
+              </h3>
+              <p style={{ fontFamily: BODY, fontSize: "0.9rem", color: MID, lineHeight: 1.6, marginBottom: 24 }}>
+                Start adding items you love to your wishlist
+              </p>
+              <GoldBtn onClick={() => { onNavigate("furniture"); onClose(); }}>
+                Browse Furniture
+              </GoldBtn>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {favProducts.map((p) => (
+                <div
+                  key={p.id}
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 8,
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    backgroundColor: WHITE,
+                    transition: `all 0.2s ${EASE_OUT}`,
+                  }}
+                  className="hover:shadow-md"
+                >
+                  {/* Image */}
+                  <div
+                    onClick={() => { onView(p); onClose(); }}
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      flexShrink: 0,
+                      cursor: "pointer",
+                      backgroundColor: CREAM_D,
+                    }}
+                  >
+                    <img
+                      src={img(p.pid, 160, 160)}
+                      alt={p.name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontFamily: SANS,
+                        fontSize: "0.62rem",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        color: GOLD,
+                        fontWeight: 600,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {p.catId.replace("-", " ")}
+                    </p>
+                    <h4
+                      onClick={() => { onView(p); onClose(); }}
+                      style={{
+                        fontFamily: DISPLAY,
+                        fontSize: "0.95rem",
+                        fontWeight: 600,
+                        color: CHARCOAL,
+                        marginBottom: 6,
+                        cursor: "pointer",
+                        lineHeight: 1.3,
+                      }}
+                      className="hover:text-opacity-70"
+                    >
+                      {p.name}
+                    </h4>
+                    <p style={{ fontFamily: SANS, fontSize: "0.85rem", color: GOLD, fontWeight: 600, marginBottom: 8 }}>
+                      {p.price}
+                    </p>
+
+                    {/* Actions */}
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        onClick={() => { onView(p); onClose(); }}
+                        style={{
+                          fontFamily: SANS,
+                          fontSize: "0.7rem",
+                          padding: "6px 12px",
+                          borderRadius: 4,
+                          backgroundColor: GOLD,
+                          color: WHITE,
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          letterSpacing: "0.05em",
+                          transition: `all 0.2s ${EASE_OUT}`,
+                        }}
+                        className="hover:opacity-80"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => onFav(p.id)}
+                        style={{
+                          fontFamily: SANS,
+                          fontSize: "0.7rem",
+                          padding: "6px 12px",
+                          borderRadius: 4,
+                          backgroundColor: "transparent",
+                          color: MID,
+                          border: `1px solid rgba(0,0,0,0.15)`,
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          letterSpacing: "0.05em",
+                          transition: `all 0.2s ${EASE_OUT}`,
+                        }}
+                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {favProducts.length > 0 && (
+          <div
+            className="px-6 py-5 border-t"
+            style={{ borderColor: "rgba(0,0,0,0.07)" }}
+          >
+            <GoldBtn onClick={() => { onNavigate("contact"); onClose(); }} fullW>
+              Contact Us About These Items
+            </GoldBtn>
+            <p style={{ 
+              fontFamily: BODY, 
+              fontSize: "0.75rem", 
+              color: MID, 
+              textAlign: "center", 
+              marginTop: 12,
+              lineHeight: 1.6 
+            }}>
+              Call or WhatsApp us to discuss pricing and availability
+            </p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

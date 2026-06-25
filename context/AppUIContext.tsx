@@ -17,15 +17,18 @@ type AppUIContextValue = {
   fav: Set<number>;
   searchOpen: boolean;
   viewProd: Prod | null;
+  wishlistOpen: boolean;
 
   closeDrawer: () => void;
   closeProduct: () => void;
   closeSearch: () => void;
+  closeWishlist: () => void;
 
   navigate: (page: string) => void; // PAGE IDs like "home", "projects", "furniture"
   openDrawer: () => void;
   openProduct: (product: Prod) => void;
   openSearch: () => void;
+  openWishlist: () => void;
 
   scrollToContact: () => void;
   setViewProd: (product: Prod | null) => void;
@@ -42,6 +45,7 @@ export function AppUIProvider({ children }: { children: React.ReactNode }) {
   const [fav, setFav] = useState<Set<number>>(new Set());
   const [viewProd, setViewProd] = useState<Prod | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [wishlistOpen, setWishlistOpen] = useState(false);
 
   // ✅ Convert page ID to path using routePathFor
   const navigate = useCallback(
@@ -89,21 +93,24 @@ export function AppUIProvider({ children }: { children: React.ReactNode }) {
       fav,
       searchOpen,
       viewProd,
+      wishlistOpen,
 
       closeDrawer: () => setDrawer(false),
       closeProduct: () => setViewProd(null),
       closeSearch: () => setSearchOpen(false),
+      closeWishlist: () => setWishlistOpen(false),
 
       navigate,
       openDrawer: () => setDrawer(true),
       openProduct: setViewProd,
       openSearch: () => setSearchOpen(true),
+      openWishlist: () => setWishlistOpen(true),
 
       scrollToContact,
       setViewProd,
       toggleFav,
     }),
-    [pathname, drawer, fav, searchOpen, viewProd, navigate, scrollToContact, toggleFav]
+    [pathname, drawer, fav, searchOpen, viewProd, wishlistOpen, navigate, scrollToContact, toggleFav]
   );
 
   return (

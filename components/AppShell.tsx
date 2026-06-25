@@ -7,6 +7,7 @@ import {
   Navbar,
   ProductModal,
   SearchOverlay,
+  WishlistPanel,
 } from "@/components/NGBComponents";
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
@@ -15,15 +16,18 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
     closeDrawer,
     closeProduct,
     closeSearch,
+    closeWishlist,
     drawer,
     fav,
     navigate,
     openDrawer,
     openSearch,
+    openWishlist,
     searchOpen,
     setViewProd,
     toggleFav,
     viewProd,
+    wishlistOpen,
   } = useAppUI();
 
   return (
@@ -39,7 +43,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         }
       `}</style>
 
-      <Navbar active={activePage} onNav={navigate} openDrawer={openDrawer} cart={fav.size} openSearch={openSearch} />
+      <Navbar active={activePage} onNav={navigate} openDrawer={openDrawer} cart={fav.size} openSearch={openSearch} openWishlist={openWishlist} />
 
       {viewProd && (
         <ProductModal
@@ -62,6 +66,23 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
           onNavigate={(page) => {
             navigate(page);
             closeSearch();
+          }}
+        />
+      )}
+
+      {wishlistOpen && (
+        <WishlistPanel
+          open={wishlistOpen}
+          onClose={closeWishlist}
+          fav={fav}
+          onFav={toggleFav}
+          onView={(product) => {
+            setViewProd(product);
+            closeWishlist();
+          }}
+          onNavigate={(page) => {
+            navigate(page);
+            closeWishlist();
           }}
         />
       )}
