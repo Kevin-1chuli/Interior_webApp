@@ -16,7 +16,7 @@ export default function HomePage() {
     <>
       <Hero onShop={()=>navigate("furniture")} onDesign={scrollToContact} />
       <ServicesAndCollections onNavigate={navigate} />
-      <SpacesShowcase />
+      <SpacesShowcase onNavigate={navigate} />
       <DesignJourney />
       <ContactSection id="contact-anchor" />
     </>
