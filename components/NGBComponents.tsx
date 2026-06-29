@@ -18,6 +18,7 @@ import {
 } from "@/lib/constants";
 import { img } from "@/lib/images";
 import { getAllProducts } from "@/lib/products";
+import { ApiProject } from "@/lib/api";
 import {
   CATS, HERO_SLIDES, JOURNEY, MATERIALS, PRODS,
   SPACES, STATS, SVC_CARDS,
@@ -248,11 +249,11 @@ export function SliderArrow({ dir, onClick, hidden }: { dir:"prev"|"next"; onCli
 
 // ─── CategorySlider — scroll-based, advances 2 cards per click ───────────────
 // FIX 4: "See all" button navigates to /furniture/${catId}
-export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView }: {
-  catId:CatId; bg?:string; fav:Set<number>; onFav:(id:number)=>void; onNavigate:(p:string)=>void; onView:(p:Prod)=>void;
+export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, products: allProducts }: {
+  catId:CatId; bg?:string; fav:Set<number>; onFav:(id:number)=>void; onNavigate:(p:string)=>void; onView:(p:Prod)=>void; products?:Record<CatId, Prod[]>;
 }) {
   const cat = CATS.find(c=>c.id===catId)!;
-  const products = PRODS[catId];
+  const products = allProducts ? allProducts[catId] : PRODS[catId];
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
@@ -981,11 +982,13 @@ export function CategoryPage({
   fav,
   onFav,
   onView,
+  products: allProducts,
 }: {
   catId: CatId;
   fav: Set<number>;
   onFav: (id: number) => void;
   onView: (p: Prod) => void;
+  products?: Record<CatId, Prod[]>;
 }) {
   const cat = CATS.find((c) => c.id === catId);
 
@@ -997,7 +1000,7 @@ export function CategoryPage({
     );
   }
 
-  const products = PRODS[catId] || [];
+  const products = allProducts ? allProducts[catId] || [] : PRODS[catId] || [];
   const [sort, setSort] = useState("featured");
 
   const sorted = [...products].sort((a, b) => {
@@ -1098,11 +1101,13 @@ export function FurniturePage({
   onFav,
   onNavigate,
   onView,
+  products,
 }: {
   fav: Set<number>;
   onFav: (id: number) => void;
   onNavigate: (p: string) => void;
   onView: (p: Prod) => void;
+  products: Record<CatId, Prod[]>;
 }) {
   return (
     <div>
@@ -1136,113 +1141,130 @@ export function FurniturePage({
       </div>
 
       <div id="cat-beds">
-        <CategorySlider catId="beds" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="beds" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
       </div>
       <div id="cat-sofas">
-        <CategorySlider catId="sofas" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="sofas" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
       </div>
       <div id="cat-wardrobes">
-        <CategorySlider catId="wardrobes" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="wardrobes" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
       </div>
       <div id="cat-tv-units">
-        <CategorySlider catId="tv-units" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="tv-units" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
       </div>
       <div id="cat-dining">
-        <CategorySlider catId="dining" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="dining" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
       </div>
       <div id="cat-coffee-tables">
-        <CategorySlider catId="coffee-tables" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} />
+        <CategorySlider catId="coffee-tables" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
       </div>
     </div>
   );
 }
 
 // ─── Projects Page (/projects) — portfolio showcase ──────────────────────────
-export function ProjectsPage({ onNavigate }: { onNavigate: (p: string) => void }) {
+const FALLBACK_PROJECTS = [
+  {
+    id: 1,
+    title: "Ntinda Luxury Living Room",
+    location: "Ntinda, Kampala",
+    problem: "Dark, cramped space with outdated furniture",
+    solution: "Open-plan design with custom sofas and natural light optimization",
+    styles: ["Modern", "Luxury"],
+    budget: "Premium",
+    category: "Residential",
+    beforePid: "1444419988131-046ed4e5ffd6",
+    afterPid: "1598928506311-c55ded91a20c",
+    rating: 5.0,
+  },
+  {
+    id: 2,
+    title: "Kololo Penthouse Bedroom",
+    location: "Kololo, Kampala",
+    problem: "Generic bedroom lacking character",
+    solution: "Minimalist African Contemporary with custom bed and warm lighting",
+    styles: ["Minimalist", "African Contemporary"],
+    budget: "Premium",
+    category: "Residential",
+    beforePid: "1613668816690-546c6fa9ad42",
+    afterPid: "1648881806148-e5c51179c826",
+    rating: 4.9,
+  },
+  {
+    id: 3,
+    title: "Bukoto Family Dining",
+    location: "Bukoto, Kampala",
+    problem: "Unused dining area, poor flow",
+    solution: "Custom dining set with integrated storage and statement lighting",
+    styles: ["Modern"],
+    budget: "Mid Range",
+    category: "Residential",
+    beforePid: "1444419988131-046ed4e5ffd6",
+    afterPid: "1706820229870-f9a8c6dac193",
+    rating: 4.8,
+  },
+  {
+    id: 4,
+    title: "Naguru Home Office",
+    location: "Naguru, Kampala",
+    problem: "Cluttered workspace affecting productivity",
+    solution: "Built-in shelving, ergonomic desk, and natural wood accents",
+    styles: ["Minimalist"],
+    budget: "Mid Range",
+    category: "Commercial",
+    beforePid: "1613668816690-546c6fa9ad42",
+    afterPid: "1688647063090-36f36f692d95",
+    rating: 4.7,
+  },
+  {
+    id: 5,
+    title: "Kira Master Suite",
+    location: "Kira, Wakiso",
+    problem: "Builder-grade bedroom with no personality",
+    solution: "Luxury finishes, custom wardrobe, and mood lighting",
+    styles: ["Luxury"],
+    budget: "Premium",
+    category: "Residential",
+    beforePid: "1444419988131-046ed4e5ffd6",
+    afterPid: "1750420556288-d0e32a6f517b",
+    rating: 5.0,
+  },
+  {
+    id: 6,
+    title: "Bugolobi Boutique Cafe",
+    location: "Bugolobi, Kampala",
+    problem: "Generic cafe space with poor seating layout",
+    solution: "African Contemporary design with custom banquette seating",
+    styles: ["African Contemporary"],
+    budget: "Mid Range",
+    category: "Commercial",
+    beforePid: "1613668816690-546c6fa9ad42",
+    afterPid: "1598928506311-c55ded91a20c",
+    rating: 4.9,
+  },
+];
+
+export function ProjectsPage({ onNavigate, projects: apiProjects }: { onNavigate: (p: string) => void; projects?: ApiProject[] }) {
   const [category, setCategory] = useState("All");
 
   const PROJECT_CATEGORIES = ["All", "Residential", "Commercial", "Luxury"];
 
-  const PROJECTS_DATA = [
-    {
-      id: 1,
-      title: "Ntinda Luxury Living Room",
-      location: "Ntinda, Kampala",
-      problem: "Dark, cramped space with outdated furniture",
-      solution: "Open-plan design with custom sofas and natural light optimization",
-      styles: ["Modern", "Luxury"],
-      budget: "Premium",
-      category: "Residential",
-      beforePid: "1444419988131-046ed4e5ffd6",
-      afterPid: "1598928506311-c55ded91a20c",
-      rating: 5.0,
-    },
-    {
-      id: 2,
-      title: "Kololo Penthouse Bedroom",
-      location: "Kololo, Kampala",
-      problem: "Generic bedroom lacking character",
-      solution: "Minimalist African Contemporary with custom bed and warm lighting",
-      styles: ["Minimalist", "African Contemporary"],
-      budget: "Premium",
-      category: "Residential",
-      beforePid: "1613668816690-546c6fa9ad42",
-      afterPid: "1648881806148-e5c51179c826",
-      rating: 4.9,
-    },
-    {
-      id: 3,
-      title: "Bukoto Family Dining",
-      location: "Bukoto, Kampala",
-      problem: "Unused dining area, poor flow",
-      solution: "Custom dining set with integrated storage and statement lighting",
-      styles: ["Modern"],
-      budget: "Mid Range",
-      category: "Residential",
-      beforePid: "1444419988131-046ed4e5ffd6",
-      afterPid: "1706820229870-f9a8c6dac193",
-      rating: 4.8,
-    },
-    {
-      id: 4,
-      title: "Naguru Home Office",
-      location: "Naguru, Kampala",
-      problem: "Cluttered workspace affecting productivity",
-      solution: "Built-in shelving, ergonomic desk, and natural wood accents",
-      styles: ["Minimalist"],
-      budget: "Mid Range",
-      category: "Commercial",
-      beforePid: "1613668816690-546c6fa9ad42",
-      afterPid: "1688647063090-36f36f692d95",
-      rating: 4.7,
-    },
-    {
-      id: 5,
-      title: "Kira Master Suite",
-      location: "Kira, Wakiso",
-      problem: "Builder-grade bedroom with no personality",
-      solution: "Luxury finishes, custom wardrobe, and mood lighting",
-      styles: ["Luxury"],
-      budget: "Premium",
-      category: "Residential",
-      beforePid: "1444419988131-046ed4e5ffd6",
-      afterPid: "1750420556288-d0e32a6f517b",
-      rating: 5.0,
-    },
-    {
-      id: 6,
-      title: "Bugolobi Boutique Cafe",
-      location: "Bugolobi, Kampala",
-      problem: "Generic cafe space with poor seating layout",
-      solution: "African Contemporary design with custom banquette seating",
-      styles: ["African Contemporary"],
-      budget: "Mid Range",
-      category: "Commercial",
-      beforePid: "1613668816690-546c6fa9ad42",
-      afterPid: "1598928506311-c55ded91a20c",
-      rating: 4.9,
-    },
-  ];
+  // Transform API projects to match UI format
+  const transformedProjects = apiProjects && apiProjects.length > 0 ? apiProjects.map((proj, index) => ({
+    id: index + 1,
+    title: proj.title,
+    location: proj.location || 'Kampala, Uganda',
+    problem: proj.problem || 'Space redesign needed',
+    solution: proj.solution || 'Complete transformation',
+    styles: [proj.style || 'Modern'],
+    budget: proj.budgetRange || 'Mid Range',
+    category: proj.category || 'Residential',
+    beforePid: proj.beforeImages[0] || '1444419988131-046ed4e5ffd6',
+    afterPid: proj.afterImages[0] || '1598928506311-c55ded91a20c',
+    rating: 4.8,
+  })) : FALLBACK_PROJECTS;
+
+  const PROJECTS_DATA = transformedProjects;
 
   const filteredProjects = category === "All" ? PROJECTS_DATA : PROJECTS_DATA.filter(p => p.category === category);
 

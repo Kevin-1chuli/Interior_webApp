@@ -31,24 +31,22 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     try {
-      // TODO: Replace with actual API call when backend is ready
-      // const response = await fetch('/api/admin/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ username, password })
-      // });
-      // const data = await response.json();
+      const response = await fetch('http://localhost:4000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
       
-      // Temporary mock authentication for development
-      if (username === "admin" && password === "ngb2024") {
-        const mockToken = "mock_jwt_token_" + Date.now();
-        localStorage.setItem("admin_token", mockToken);
-        setToken(mockToken);
-        setIsAuthenticated(true);
-        router.push("/admin/dashboard");
-      } else {
-        throw new Error("Invalid credentials");
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Invalid credentials');
       }
+      
+      localStorage.setItem("admin_token", data.token);
+      setToken(data.token);
+      setIsAuthenticated(true);
+      router.push("/admin/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       throw error;

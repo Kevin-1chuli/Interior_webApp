@@ -4,37 +4,36 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function NewProductPage() {
+export default function NewProjectPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+    title: "",
+    location: "",
     category: "",
-    price: "",
-    materials: "",
-    dimensions: "",
+    style: "",
+    problem: "",
+    solution: "",
+    budgetRange: "",
   });
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   const categories = [
-    { id: "beds", label: "Beds" },
-    { id: "sofas", label: "Sofas" },
-    { id: "wardrobes", label: "Wardrobes" },
-    { id: "tv-units", label: "TV Units" },
-    { id: "dining", label: "Dining" },
-    { id: "coffee-tables", label: "Coffee Tables" },
+    { id: "Living Room", label: "Living Room" },
+    { id: "Bedroom", label: "Bedroom" },
+    { id: "Kitchen", label: "Kitchen" },
+    { id: "Bathroom", label: "Bathroom" },
+    { id: "Office", label: "Office" },
+    { id: "Dining Room", label: "Dining Room" },
   ];
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setImages(files);
-
-    // Create previews
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setImagePreviews(previews);
-  };
+  const styles = [
+    { id: "Modern", label: "Modern" },
+    { id: "Contemporary", label: "Contemporary" },
+    { id: "Minimalist", label: "Minimalist" },
+    { id: "Traditional", label: "Traditional" },
+    { id: "Industrial", label: "Industrial" },
+    { id: "Scandinavian", label: "Scandinavian" },
+  ];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,39 +47,37 @@ export default function NewProductPage() {
         return;
       }
 
-      // Step 1: Upload images to Cloudinary (skip for now - use empty array)
-      const imageUrls: string[] = [];
-      
-      // Step 2: Create product
-      const response = await fetch('http://localhost:4000/api/products', {
+      const response = await fetch('http://localhost:4000/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: formData.name,
-          description: formData.description,
+          title: formData.title,
+          location: formData.location,
           category: formData.category,
-          price: parseFloat(formData.price),
-          currency: 'UGX',
-          images: imageUrls,
-          materials: formData.materials ? formData.materials.split(',').map(m => m.trim()) : [],
-          dimensions: formData.dimensions
+          style: formData.style,
+          problem: formData.problem,
+          solution: formData.solution,
+          budgetRange: formData.budgetRange,
+          beforeImages: [],
+          afterImages: [],
+          isFeatured: false
         })
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Failed to create product');
+        throw new Error(data.message || 'Failed to create project');
       }
 
-      alert("Product created successfully!");
-      router.push("/admin/products");
+      alert("Project created successfully!");
+      router.push("/admin/projects");
     } catch (error: any) {
-      console.error("Failed to create product:", error);
-      alert(`Failed to create product: ${error.message}`);
+      console.error("Failed to create project:", error);
+      alert(`Failed to create project: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -91,47 +88,46 @@ export default function NewProductPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <Link href="/admin/products" className="hover:text-gray-900">Products</Link>
+          <Link href="/admin/projects" className="hover:text-gray-900">Projects</Link>
           <span>/</span>
-          <span className="text-gray-900">New Product</span>
+          <span className="text-gray-900">New Project</span>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Add New Product</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Add New Project</h1>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="max-w-4xl">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 space-y-6">
-          {/* Product Name */}
+          {/* Project Title */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Product Name <span className="text-red-500">*</span>
+              Project Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-              placeholder="e.g., Modern Platform Bed"
+              placeholder="e.g., Modern Living Room Transformation"
             />
           </div>
 
-          {/* Description */}
+          {/* Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description <span className="text-red-500">*</span>
+              Location
             </label>
-            <textarea
-              required
-              rows={4}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-              placeholder="Describe the product..."
+              placeholder="e.g., Kampala, Uganda"
             />
           </div>
 
-          {/* Category & Price */}
+          {/* Category & Style */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -152,75 +148,63 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price (UGX) <span className="text-red-500">*</span>
+                Style <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
+              <select
                 required
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                value={formData.style}
+                onChange={(e) => setFormData({ ...formData, style: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-                placeholder="e.g., 2500000"
-              />
+              >
+                <option value="">Select a style</option>
+                {styles.map((style) => (
+                  <option key={style.id} value={style.id}>{style.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Materials */}
+          {/* Problem */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Materials
+              Problem Statement
             </label>
-            <input
-              type="text"
-              value={formData.materials}
-              onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
+            <textarea
+              rows={3}
+              value={formData.problem}
+              onChange={(e) => setFormData({ ...formData, problem: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-              placeholder="e.g., Solid Wood, Fabric Upholstery (comma-separated)"
+              placeholder="What was the challenge with this space?"
             />
           </div>
 
-          {/* Dimensions */}
+          {/* Solution */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Dimensions
+              Solution <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              value={formData.dimensions}
-              onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-              placeholder="e.g., 180cm x 200cm x 45cm"
-            />
-          </div>
-
-          {/* Images */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Product Images <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
+            <textarea
               required
+              rows={3}
+              value={formData.solution}
+              onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
+              placeholder="How did you transform the space?"
             />
-            <p className="text-sm text-gray-500 mt-1">Upload 3-5 images (JPG, PNG)</p>
+          </div>
 
-            {imagePreviews.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative aspect-square">
-                    <img
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-full object-cover rounded-md border border-gray-200"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Budget Range */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Budget Range
+            </label>
+            <input
+              type="text"
+              value={formData.budgetRange}
+              onChange={(e) => setFormData({ ...formData, budgetRange: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
+              placeholder="e.g., 5M - 10M UGX"
+            />
           </div>
 
           {/* Actions */}
@@ -230,10 +214,10 @@ export default function NewProductPage() {
               disabled={isSubmitting}
               className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-8 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Creating..." : "Create Product"}
+              {isSubmitting ? "Creating..." : "Create Project"}
             </button>
             <Link
-              href="/admin/products"
+              href="/admin/projects"
               className="w-full sm:w-auto text-center text-gray-700 hover:text-gray-900 font-medium px-8 py-3"
             >
               Cancel
@@ -243,7 +227,7 @@ export default function NewProductPage() {
           {/* Notice */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-700">
-              <strong>Note:</strong> This form is ready for backend integration. Images will be uploaded to Cloudinary and product data will be saved to PostgreSQL via your Express API.
+              <strong>Note:</strong> Images will be added in future updates. For now, projects are created with text details only.
             </p>
           </div>
         </div>

@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  email     String?
+  role      String   @default("admin")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  price       Decimal  @db.Decimal(12, 2)
+  currency    String   @default("UGX")
+  images      Json     @default("[]")
+  materials   Json     @default("[]")
+  dimensions  String?
+  isAvailable Boolean  @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([isAvailable])
+  @@map("products")
+}
+
+model Project {
+  id           String   @id @default(uuid())
+  title        String
+  location     String?
+  category     String?
+  style        String?
+  problem      String?
+  solution     String?
+  beforeImages Json     @default("[]") @map("before_images")
+  afterImages  Json     @default("[]") @map("after_images")
+  budgetRange  String?  @map("budget_range")
+  isFeatured   Boolean  @default(false) @map("is_featured")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([isFeatured])
+  @@map("projects")
+}

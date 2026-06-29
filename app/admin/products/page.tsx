@@ -1,11 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function ProductsListPage() {
-  // TODO: Replace with real API data when backend is ready
-  const [products] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('http://localhost:4000/api/products');
+      const data = await response.json();
+      if (data.success) {
+        setProducts(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      const token = localStorage.getItem('admin_token');
+      // Delete endpoint needs to be implemented in backend
+      alert('Delete functionality coming soon');
+    } catch (error) {
+      console.error('Failed to delete:', error);
+      alert('Failed to delete product');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8">
+        <div className="text-center py-12">Loading products...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
@@ -63,7 +102,7 @@ export default function ProductsListPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">{product.category}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.price}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{product.currency} {Number(product.price).toLocaleString()}</td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                       Active
@@ -73,7 +112,7 @@ export default function ProductsListPage() {
                     <Link href={`/admin/products/${product.id}/edit`} className="text-blue-600 hover:text-blue-900">
                       Edit
                     </Link>
-                    <button className="text-red-600 hover:text-red-900">Delete</button>
+                    <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900">Delete</button>
                   </td>
                 </tr>
               ))}
