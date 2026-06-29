@@ -2,7 +2,7 @@
 
 export default function DesignRequestsPage() {
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Design Requests</h1>
         <p className="text-gray-600 mt-2">View and manage interior design requests from customers</p>

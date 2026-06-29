@@ -87,7 +87,7 @@ export default function NewProductPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
@@ -132,7 +132,7 @@ export default function NewProductPage() {
           </div>
 
           {/* Category & Price */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category <span className="text-red-500">*</span>
@@ -209,7 +209,7 @@ export default function NewProductPage() {
             <p className="text-sm text-gray-500 mt-1">Upload 3-5 images (JPG, PNG)</p>
 
             {imagePreviews.length > 0 && (
-              <div className="mt-4 grid grid-cols-5 gap-4">
+              <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                 {imagePreviews.map((preview, index) => (
                   <div key={index} className="relative aspect-square">
                     <img
@@ -224,17 +224,17 @@ export default function NewProductPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4 pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-6 border-t border-gray-200">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-8 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-8 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Creating..." : "Create Product"}
             </button>
             <Link
               href="/admin/products"
-              className="text-gray-700 hover:text-gray-900 font-medium px-8 py-3"
+              className="w-full sm:w-auto text-center text-gray-700 hover:text-gray-900 font-medium px-8 py-3"
             >
               Cancel
             </Link>
