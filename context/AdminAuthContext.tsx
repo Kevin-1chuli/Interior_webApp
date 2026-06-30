@@ -3,12 +3,21 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
+interface User {
+  id: string;
+  username: string;
+  email: string | null;
+  role: 'OWNER' | 'STAFF';
+}
+
 interface AdminAuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
+  user: User | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   token: string | null;
+  isOwner: boolean;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null);
@@ -17,14 +26,25 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
   // Check if already logged in on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("admin_token");
-    if (storedToken) {
-      setToken(storedToken);
-      setIsAuthenticated(true);
+    const storedUser = localStorage.getItem("admin_user");
+    
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Failed to parse stored user:', error);
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_user");
+      }
     }
     setIsLoading(false);
   }, []);
@@ -44,7 +64,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       localStorage.setItem("admin_token", data.token);
+      localStorage.setItem("admin_user", JSON.stringify(data.user));
       setToken(data.token);
+      setUser(data.user);
       setIsAuthenticated(true);
       router.push("/admin/dashboard");
     } catch (error) {
@@ -55,13 +77,25 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_user");
     setToken(null);
+    setUser(null);
     setIsAuthenticated(false);
     router.push("/admin/login");
   }, [router]);
 
+  const isOwner = user?.role === 'OWNER';
+
+  // Debug logging
+  useEffect(() => {
+    if (user) {
+      console.log('[AdminLayout] User:', user);
+      console.log('[AdminLayout] isOwner:', isOwner);
+    }
+  }, [user, isOwner]);
+
   return (
-    <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, login, logout, token }}>
+    <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout, token, isOwner }}>
       {children}
     </AdminAuthContext.Provider>
   );

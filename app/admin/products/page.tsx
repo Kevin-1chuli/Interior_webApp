@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Plus, Search, Sofa, Trash2, Edit, Calendar } from "lucide-react";
 
 export default function ProductsListPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchProducts();
@@ -25,99 +27,262 @@ export default function ProductsListPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
       const token = localStorage.getItem('admin_token');
-      // Delete endpoint needs to be implemented in backend
-      alert('Delete functionality coming soon');
-    } catch (error) {
+      const response = await fetch(`http://localhost:4000/api/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete product');
+      }
+
+      fetchProducts();
+    } catch (error: any) {
       console.error('Failed to delete:', error);
-      alert('Failed to delete product');
+      alert(`Failed to delete product: ${error.message}`);
     }
   };
 
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (isLoading) {
     return (
-      <div className="p-4 sm:p-6 md:p-8">
-        <div className="text-center py-12">Loading products...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading products...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600 mt-2">Manage furniture and products</p>
+    <div className="min-h-screen" style={{ backgroundColor: "#f8f5f0" }}>
+      <div className="max-w-7xl mx-auto p-6 lg:p-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-4xl font-bold mb-2" style={{ color: "#1e1e1e", fontFamily: "'Playfair Display', serif" }}>
+              Products
+            </h1>
+            <p className="text-base" style={{ color: "#6b6560" }}>
+              Manage your furniture catalog
+            </p>
+          </div>
+          <Link
+            href="/admin/products/new"
+            className="inline-flex items-center justify-center gap-2 font-medium px-6 py-3 rounded-lg transition-all hover:shadow-lg"
+            style={{ backgroundColor: "#b8934a", color: "white" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#d4ac6e";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#b8934a";
+            }}
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Product</span>
+          </Link>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-6 py-3 rounded-lg transition-colors flex items-center gap-2"
-        >
-          <span>➕</span>
-          <span>Add Product</span>
-        </Link>
-      </div>
 
-      {/* Products Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {products.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No products yet</h3>
-            <p className="text-gray-600 mb-6">Start by adding your first product to the catalog</p>
+        {/* Search Bar */}
+        {products.length > 0 && (
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: "#6b6560" }} />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-lg outline-none bg-white transition-all"
+                style={{ 
+                  border: "2px solid #ede9e2",
+                  fontFamily: "'Montserrat', sans-serif"
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#b8934a";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#ede9e2";
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Products Grid/List */}
+        {filteredProducts.length === 0 && !searchQuery ? (
+          <div className="bg-white rounded-lg border p-12 text-center" style={{ borderColor: "#ede9e2" }}>
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ backgroundColor: "#f8f5f0" }}
+            >
+              <Sofa className="w-8 h-8" style={{ color: "#b8934a" }} />
+            </div>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: "#1e1e1e", fontFamily: "'Playfair Display', serif" }}>
+              No products yet
+            </h3>
+            <p className="mb-6" style={{ color: "#6b6560" }}>
+              Start by adding your first product to the catalog
+            </p>
             <Link
               href="/admin/products/new"
-              className="inline-flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 font-medium px-6 py-3 rounded-lg transition-all"
+              style={{ backgroundColor: "#b8934a", color: "white" }}
             >
-              <span>➕</span>
+              <Plus className="w-5 h-5" />
               <span>Add Your First Product</span>
             </Link>
           </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="bg-white rounded-lg border p-12 text-center" style={{ borderColor: "#ede9e2" }}>
+            <p style={{ color: "#6b6560" }}>No products match your search</p>
+          </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {products.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gray-200 rounded-md"></div>
-                      <div>
-                        <div className="font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-500">{product.description?.substring(0, 50)}...</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.category}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.currency} {Number(product.price).toLocaleString()}</td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                      Active
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                    <Link href={`/admin/products/${product.id}/edit`} className="text-blue-600 hover:text-blue-900">
-                      Edit
-                    </Link>
-                    <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="bg-white rounded-lg border overflow-hidden" style={{ borderColor: "#ede9e2" }}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ backgroundColor: "#f8f5f0", borderBottom: "1px solid #ede9e2" }}>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560", fontFamily: "'Montserrat', sans-serif" }}>
+                      Product
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560", fontFamily: "'Montserrat', sans-serif" }}>
+                      Category
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560", fontFamily: "'Montserrat', sans-serif" }}>
+                      Price
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560", fontFamily: "'Montserrat', sans-serif" }}>
+                      Created
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560", fontFamily: "'Montserrat', sans-serif" }}>
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((product, idx) => (
+                    <tr 
+                      key={product.id} 
+                      className="transition-colors hover:bg-opacity-50"
+                      style={{ 
+                        borderBottom: idx < filteredProducts.length - 1 ? "1px solid #ede9e2" : "none"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#f8f5f0";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div 
+                            className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+                            style={{ backgroundColor: "#ede9e2" }}
+                          >
+                            {product.images && Array.isArray(product.images) && product.images.length > 0 ? (
+                              <img 
+                                src={product.images[0]} 
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Sofa className="w-6 h-6" style={{ color: "#b8934a" }} />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate" style={{ color: "#1e1e1e", fontFamily: "'Montserrat', sans-serif" }}>
+                              {product.name}
+                            </div>
+                            <div className="text-sm truncate" style={{ color: "#6b6560" }}>
+                              {product.description?.substring(0, 60) || 'No description'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span 
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize"
+                          style={{ 
+                            backgroundColor: "#f8f5f0",
+                            color: "#b8934a",
+                            fontFamily: "'Montserrat', sans-serif"
+                          }}
+                        >
+                          {product.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold" style={{ color: "#1e1e1e", fontFamily: "'Montserrat', sans-serif" }}>
+                          {product.currency} {Number(product.price).toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm" style={{ color: "#6b6560" }}>
+                          <Calendar className="w-4 h-4" />
+                          {new Date(product.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link 
+                            href={`/admin/products/${product.id}/edit`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all"
+                            style={{ color: "#b8934a" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f8f5f0";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                            Edit
+                          </Link>
+                          <button 
+                            onClick={() => handleDelete(product.id, product.name)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all"
+                            style={{ color: "#dc2626" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fee2e2";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Results Count */}
+        {filteredProducts.length > 0 && (
+          <div className="mt-4 text-sm text-center" style={{ color: "#6b6560" }}>
+            Showing {filteredProducts.length} of {products.length} products
+          </div>
         )}
       </div>
     </div>

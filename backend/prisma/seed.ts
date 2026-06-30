@@ -1,26 +1,26 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding database...');
 
-  // Create admin user
+  // Create owner user
   const hashedPassword = await bcrypt.hash('ngb2024', 10);
   
-  const admin = await prisma.user.upsert({
+  const owner = await prisma.user.upsert({
     where: { username: 'admin' },
-    update: {},
+    update: { role: 'OWNER' }, // Update existing admin to OWNER
     create: {
       username: 'admin',
       password: hashedPassword,
       email: 'admin@ngbinterior.com',
-      role: 'admin'
+      role: 'OWNER'
     }
   });
 
-  console.log('✓ Admin user created:', admin.username);
+  console.log('✓ Owner account created:', owner.username, `(${owner.role})`);
 
   // Optional: Create sample products
   const sampleProducts = [
@@ -49,39 +49,45 @@ async function main() {
   ];
 
   for (const product of sampleProducts) {
-    await prisma.product.upsert({
-      where: { id: product.name }, // Temporary unique constraint
-      update: {},
-      create: product
-    }).catch(() => {
-      // If upsert fails, create instead
-      return prisma.product.create({ data: product });
+    const existing = await prisma.product.findFirst({
+      where: { name: product.name }
     });
+    
+    if (!existing) {
+      await prisma.product.create({ data: product });
+    }
   }
 
   console.log('✓ Sample products created');
 
   // Optional: Create sample project
-  await prisma.project.create({
-    data: {
-      title: 'Modern Living Room Transformation',
-      location: 'Kampala, Uganda',
-      category: 'Living Room',
-      style: 'Modern',
-      problem: 'Outdated furniture and poor space utilization',
-      solution: 'Complete redesign with modern furniture and optimized layout',
-      beforeImages: [],
-      afterImages: [],
-      budgetRange: '5M - 10M UGX',
-      isFeatured: true
-    }
-  }).catch(() => console.log('Sample project already exists'));
+  const existingProject = await prisma.project.findFirst({
+    where: { title: 'Modern Living Room Transformation' }
+  });
+
+  if (!existingProject) {
+    await prisma.project.create({
+      data: {
+        title: 'Modern Living Room Transformation',
+        location: 'Kampala, Uganda',
+        category: 'Living Room',
+        style: 'Modern',
+        problem: 'Outdated furniture and poor space utilization',
+        solution: 'Complete redesign with modern furniture and optimized layout',
+        beforeImages: [],
+        afterImages: [],
+        budgetRange: '5M - 10M UGX',
+        isFeatured: true
+      }
+    });
+  }
 
   console.log('✓ Sample project created');
   console.log('\n✓ Database seeded successfully!');
-  console.log('\nAdmin credentials:');
+  console.log('\nOwner credentials:');
   console.log('Username: admin');
   console.log('Password: ngb2024');
+  console.log('Role: OWNER');
 }
 
 main()

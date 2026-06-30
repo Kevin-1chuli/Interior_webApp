@@ -75,13 +75,17 @@ export default function AdminLoginPage() {
               disabled={isLoading}
               className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Signing in..." : "Login to Dashboard"}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Development credentials:</p>
-            <p className="font-mono text-xs mt-1">admin / ngb2024</p>
+          <div className="mt-4 text-center">
+            <a 
+              href="/admin/forgot-password" 
+              className="text-sm text-yellow-600 hover:text-yellow-700 transition-colors"
+            >
+              Forgot password?
+            </a>
           </div>
         </div>
       </div>

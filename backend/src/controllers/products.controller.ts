@@ -1,6 +1,28 @@
 import { Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
+import cloudinary from '../config/cloudinary';
+
+// Helper function to upload image to Cloudinary
+const uploadToCloudinary = (buffer: Buffer, filename: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'ngb-products',
+        public_id: `product_${Date.now()}_${filename}`,
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result!.secure_url);
+        }
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
 
 export const getProducts = async (req: AuthRequest, res: Response) => {
   try {
@@ -47,7 +69,6 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       category,
       price,
       currency = 'UGX',
-      images = [],
       materials = [],
       dimensions
     } = req.body;
@@ -59,6 +80,23 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Handle image uploads
+    let imageUrls: string[] = [];
+    if (req.files && Array.isArray(req.files)) {
+      try {
+        const uploadPromises = req.files.map((file: Express.Multer.File) =>
+          uploadToCloudinary(file.buffer, file.originalname)
+        );
+        imageUrls = await Promise.all(uploadPromises);
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload images to Cloudinary'
+        });
+      }
+    }
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -66,8 +104,8 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
         category,
         price,
         currency,
-        images,
-        materials,
+        images: imageUrls,
+        materials: Array.isArray(materials) ? materials : [],
         dimensions
       }
     });
@@ -78,6 +116,27 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Create product error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const deleteProduct = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.product.delete({
+      where: { id }
+    });
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+  } catch (error: any) {
+    console.error('Delete product error:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

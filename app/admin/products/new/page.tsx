@@ -48,26 +48,33 @@ export default function NewProductPage() {
         return;
       }
 
-      // Step 1: Upload images to Cloudinary (skip for now - use empty array)
-      const imageUrls: string[] = [];
+      // Create FormData for multipart/form-data
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('price', formData.price);
+      formDataToSend.append('currency', 'UGX');
+      formDataToSend.append('dimensions', formData.dimensions);
       
-      // Step 2: Create product
+      // Add materials as JSON array
+      const materialsArray = formData.materials 
+        ? formData.materials.split(',').map(m => m.trim())
+        : [];
+      formDataToSend.append('materials', JSON.stringify(materialsArray));
+
+      // Add images
+      images.forEach((image) => {
+        formDataToSend.append('images', image);
+      });
+
       const response = await fetch('http://localhost:4000/api/products', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
+          // Don't set Content-Type header - browser will set it automatically with boundary
         },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description,
-          category: formData.category,
-          price: parseFloat(formData.price),
-          currency: 'UGX',
-          images: imageUrls,
-          materials: formData.materials ? formData.materials.split(',').map(m => m.trim()) : [],
-          dimensions: formData.dimensions
-        })
+        body: formDataToSend
       });
 
       const data = await response.json();
@@ -243,7 +250,7 @@ export default function NewProductPage() {
           {/* Notice */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-700">
-              <strong>Note:</strong> This form is ready for backend integration. Images will be uploaded to Cloudinary and product data will be saved to PostgreSQL via your Express API.
+              <strong>Note:</strong> Images will be uploaded to Cloudinary and product data will be saved to PostgreSQL. Make sure Cloudinary credentials are configured in backend .env file.
             </p>
           </div>
         </div>
