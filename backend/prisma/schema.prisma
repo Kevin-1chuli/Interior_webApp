@@ -8,15 +8,14 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(uuid())
-  username            String    @unique
-  password            String
-  email               String?
-  role                UserRole  @default(STAFF)
-  resetPasswordToken  String?   @map("reset_password_token")
-  resetPasswordExpiry DateTime? @map("reset_password_expiry")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
+  id                    String    @id @default(uuid())
+  username              String    @unique
+  password              String
+  email                 String?
+  role                  UserRole  @default(STAFF)
+  requirePasswordChange Boolean   @default(false) @map("require_password_change")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   @@map("users")
 }

@@ -99,15 +99,6 @@ export default function AdminLoginPage() {
             >
               {isLoading ? "Signing in..." : "Login to Dashboard"}
             </button>
-
-            <div className="text-center">
-              <Link 
-                href="/admin/forgot-password" 
-                className="text-sm text-amber-600 hover:text-amber-700 transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
           </form>
         </div>
 

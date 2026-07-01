@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { authenticatedFetch, getToken, isOwner as checkIsOwner } from "@/lib/auth";
 import { getApiUrl } from "@/lib/config";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Users as UsersIcon } from "lucide-react";
+import { Plus, Trash2, Users as UsersIcon, Key } from "lucide-react";
 
 interface Staff {
   id: string;
@@ -19,7 +19,9 @@ export default function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState<string | null>(null);
   const [formData, setFormData] = useState({ username: "", password: "", email: "" });
+  const [resetPasswordData, setResetPasswordData] = useState({ newPassword: "", confirmPassword: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -73,6 +75,44 @@ export default function StaffPage() {
     }
   };
 
+  const handleResetPassword = async (staffId: string) => {
+    setError("");
+    
+    if (resetPasswordData.newPassword !== resetPasswordData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (resetPasswordData.newPassword.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await authenticatedFetch(getApiUrl(`auth/staff/${staffId}/reset-password`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: resetPasswordData.newPassword })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to reset password');
+      }
+
+      setResetPasswordData({ newPassword: "", confirmPassword: "" });
+      setShowResetPassword(null);
+      alert(data.message || 'Password reset successfully');
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleDelete = async (id: string, username: string) => {
     if (!confirm(`Delete staff member "${username}"?`)) return;
 
@@ -113,7 +153,7 @@ export default function StaffPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
-            <p className="text-gray-600 mt-1">Manage staff accounts and permissions</p>
+            <p className="text-gray-600 mt-1">Manage staff accounts and passwords</p>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
@@ -144,7 +184,7 @@ export default function StaffPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password *
+                  Temporary Password *
                 </label>
                 <input
                   type="password"
@@ -153,8 +193,9 @@ export default function StaffPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  placeholder="Enter password (min 6 characters)"
+                  placeholder="Staff will be required to change this on first login"
                 />
+                <p className="text-xs text-gray-500 mt-1">Staff will be forced to change this password on first login</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -233,35 +274,108 @@ export default function StaffPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {staff.map((member) => (
-                    <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900">{member.username}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600">{member.email || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                          {member.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600">
-                          {new Date(member.createdAt).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end">
-                          <button
-                            onClick={() => handleDelete(member.id, member.username)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                    <React.Fragment key={member.id}>
+                      <tr className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-gray-900">{member.username}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600">{member.email || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            {member.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-600">
+                            {new Date(member.createdAt).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setShowResetPassword(showResetPassword === member.id ? null : member.id);
+                                setError("");
+                                setResetPasswordData({ newPassword: "", confirmPassword: "" });
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                            >
+                              <Key className="w-4 h-4" />
+                              Reset
+                            </button>
+                            <button
+                              onClick={() => handleDelete(member.id, member.username)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {showResetPassword === member.id && (
+                        <tr>
+                          <td colSpan={5} className="px-6 py-4 bg-amber-50">
+                            <div className="max-w-md">
+                              <h4 className="font-semibold text-gray-900 mb-3">Reset Password for {member.username}</h4>
+                              <div className="space-y-3">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    New Password
+                                  </label>
+                                  <input
+                                    type="password"
+                                    value={resetPasswordData.newPassword}
+                                    onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                    placeholder="Enter new password (min 6 characters)"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Confirm Password
+                                  </label>
+                                  <input
+                                    type="password"
+                                    value={resetPasswordData.confirmPassword}
+                                    onChange={(e) => setResetPasswordData({ ...resetPasswordData, confirmPassword: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                    placeholder="Confirm new password"
+                                  />
+                                </div>
+                                {error && (
+                                  <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+                                    {error}
+                                  </div>
+                                )}
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleResetPassword(member.id)}
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-lg font-medium transition-all disabled:opacity-50"
+                                  >
+                                    {isSubmitting ? "Resetting..." : "Reset Password"}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setShowResetPassword(null);
+                                      setError("");
+                                      setResetPasswordData({ newPassword: "", confirmPassword: "" });
+                                    }}
+                                    className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm rounded-lg font-medium transition-all"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                                <p className="text-xs text-gray-600">Staff will be required to change this password on next login</p>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
