@@ -86,14 +86,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const isOwner = user?.role === 'OWNER';
 
-  // Debug logging
-  useEffect(() => {
-    if (user) {
-      console.log('[AdminLayout] User:', user);
-      console.log('[AdminLayout] isOwner:', isOwner);
-    }
-  }, [user, isOwner]);
-
   return (
     <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout, token, isOwner }}>
       {children}

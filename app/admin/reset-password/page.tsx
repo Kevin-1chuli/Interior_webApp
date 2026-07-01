@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/config";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/reset-password', {
+      const response = await fetch(getApiUrl('auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword })

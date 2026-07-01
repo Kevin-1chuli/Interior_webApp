@@ -69,7 +69,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       category,
       price,
       currency = 'UGX',
-      materials = [],
+      materials,
       dimensions
     } = req.body;
 
@@ -78,6 +78,20 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
         success: false,
         message: 'Name, category, and price are required'
       });
+    }
+
+    // Parse materials if it's a JSON string
+    let materialsArray: string[] = [];
+    if (materials) {
+      try {
+        materialsArray = typeof materials === 'string' ? JSON.parse(materials) : materials;
+        if (!Array.isArray(materialsArray)) {
+          materialsArray = [];
+        }
+      } catch (e) {
+        console.error('Failed to parse materials:', e);
+        materialsArray = [];
+      }
     }
 
     // Handle image uploads
@@ -100,23 +114,37 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
     const product = await prisma.product.create({
       data: {
         name,
-        description,
+        description: description || null,
         category,
-        price,
+        price: parseFloat(price),
         currency,
         images: imageUrls,
-        materials: Array.isArray(materials) ? materials : [],
-        dimensions
+        materials: materialsArray,
+        dimensions: dimensions || null
       }
     });
 
     res.status(201).json({
       success: true,
-      data: product
+      data: product,
+      message: 'Product created successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create product error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    
+    // Handle Prisma unique constraint errors
+    if (error.code === 'P2002') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A product with this name already exists' 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 

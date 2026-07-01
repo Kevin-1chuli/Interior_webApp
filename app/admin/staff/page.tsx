@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAdminAuth } from "@/context/AdminAuthContext";
+import { authenticatedFetch, getToken, isOwner as checkIsOwner } from "@/lib/auth";
+import { getApiUrl } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Users as UsersIcon } from "lucide-react";
 
@@ -14,27 +15,25 @@ interface Staff {
 }
 
 export default function StaffPage() {
-  const { token, isOwner } = useAdminAuth();
   const router = useRouter();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "", email: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isOwner) {
+    if (!checkIsOwner()) {
       router.push("/admin/dashboard");
       return;
     }
     fetchStaff();
-  }, [isOwner, router]);
+  }, [router]);
 
   const fetchStaff = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/auth/staff', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authenticatedFetch(getApiUrl('auth/staff'));
       const data = await response.json();
       if (data.success) {
         setStaff(data.data);
@@ -48,15 +47,13 @@ export default function StaffPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/staff', {
+      const response = await authenticatedFetch(getApiUrl('auth/staff'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
@@ -69,9 +66,8 @@ export default function StaffPage() {
       setFormData({ username: "", password: "", email: "" });
       setShowCreateForm(false);
       fetchStaff();
-      alert('Staff created successfully');
     } catch (error: any) {
-      alert(error.message);
+      setError(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -81,9 +77,8 @@ export default function StaffPage() {
     if (!confirm(`Delete staff member "${username}"?`)) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/auth/staff/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await authenticatedFetch(getApiUrl(`auth/staff/${id}`), {
+        method: 'DELETE'
       });
 
       const data = await response.json();
@@ -98,36 +93,31 @@ export default function StaffPage() {
     }
   };
 
-  if (!isOwner) return null;
+  if (!checkIsOwner()) return null;
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#f8f5f0" }}>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: "#b8934a" }}></div>
-          <p className="mt-4" style={{ color: "#6b6560" }}>Loading staff...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading staff...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f8f5f0" }}>
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 lg:p-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2" style={{ color: "#1e1e1e", fontFamily: "'Playfair Display', serif" }}>
-              Staff Management
-            </h1>
-            <p className="text-base" style={{ color: "#6b6560" }}>
-              Manage staff accounts and permissions
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
+            <p className="text-gray-600 mt-1">Manage staff accounts and permissions</p>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="inline-flex items-center justify-center gap-2 font-medium px-6 py-3 rounded-lg transition-all hover:shadow-lg"
-            style={{ backgroundColor: "#b8934a", color: "white" }}
+            className="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium px-6 py-2.5 rounded-lg transition-all"
           >
             <Plus className="w-5 h-5" />
             <span>Add Staff</span>
@@ -136,13 +126,11 @@ export default function StaffPage() {
 
         {/* Create Form */}
         {showCreateForm && (
-          <div className="bg-white rounded-lg border p-6 mb-6" style={{ borderColor: "#ede9e2" }}>
-            <h2 className="text-xl font-semibold mb-4" style={{ color: "#1e1e1e", fontFamily: "'Playfair Display', serif" }}>
-              Create New Staff Account
-            </h2>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Create New Staff Account</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#6b6560" }}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Username *
                 </label>
                 <input
@@ -150,41 +138,48 @@ export default function StaffPage() {
                   required
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg outline-none"
-                  style={{ border: "2px solid #ede9e2" }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="Enter username"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#6b6560" }}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Password *
                 </label>
                 <input
                   type="password"
                   required
+                  minLength={6}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg outline-none"
-                  style={{ border: "2px solid #ede9e2" }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="Enter password (min 6 characters)"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: "#6b6560" }}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email (optional)
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg outline-none"
-                  style={{ border: "2px solid #ede9e2" }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="Enter email"
                 />
               </div>
-              <div className="flex gap-4">
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex gap-3">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2 rounded-lg font-medium transition-all disabled:opacity-50"
-                  style={{ backgroundColor: "#b8934a", color: "white" }}
+                  className="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? "Creating..." : "Create Staff"}
                 </button>
@@ -193,9 +188,9 @@ export default function StaffPage() {
                   onClick={() => {
                     setShowCreateForm(false);
                     setFormData({ username: "", password: "", email: "" });
+                    setError("");
                   }}
-                  className="px-6 py-2 rounded-lg font-medium"
-                  style={{ border: "2px solid #ede9e2", color: "#6b6560" }}
+                  className="px-6 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-all"
                 >
                   Cancel
                 </button>
@@ -206,69 +201,52 @@ export default function StaffPage() {
 
         {/* Staff List */}
         {staff.length === 0 ? (
-          <div className="bg-white rounded-lg border p-12 text-center" style={{ borderColor: "#ede9e2" }}>
-            <div 
-              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-              style={{ backgroundColor: "#f8f5f0" }}
-            >
-              <UsersIcon className="w-8 h-8" style={{ color: "#b8934a" }} />
+          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+              <UsersIcon className="w-8 h-8 text-amber-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: "#1e1e1e", fontFamily: "'Playfair Display', serif" }}>
-              No staff yet
-            </h3>
-            <p style={{ color: "#6b6560" }}>Create staff accounts to delegate tasks</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No staff yet</h3>
+            <p className="text-gray-600">Create staff accounts to delegate tasks</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border overflow-hidden" style={{ borderColor: "#ede9e2" }}>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: "#f8f5f0", borderBottom: "1px solid #ede9e2" }}>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560" }}>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Username
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560" }}>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560" }}>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Role
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560" }}>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "#6b6560" }}>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody>
-                  {staff.map((member, idx) => (
-                    <tr 
-                      key={member.id}
-                      style={{ borderBottom: idx < staff.length - 1 ? "1px solid #ede9e2" : "none" }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f8f5f0"}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
-                    >
+                <tbody className="divide-y divide-gray-200">
+                  {staff.map((member) => (
+                    <tr key={member.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-semibold" style={{ color: "#1e1e1e" }}>
-                          {member.username}
-                        </div>
+                        <div className="font-semibold text-gray-900">{member.username}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm" style={{ color: "#6b6560" }}>
-                          {member.email || '-'}
-                        </div>
+                        <div className="text-sm text-gray-600">{member.email || '-'}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <span 
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-                          style={{ backgroundColor: "#f8f5f0", color: "#b8934a" }}
-                        >
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                           {member.role}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm" style={{ color: "#6b6560" }}>
+                        <div className="text-sm text-gray-600">
                           {new Date(member.createdAt).toLocaleDateString()}
                         </div>
                       </td>
@@ -276,10 +254,7 @@ export default function StaffPage() {
                         <div className="flex items-center justify-end">
                           <button
                             onClick={() => handleDelete(member.id, member.username)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all"
-                            style={{ color: "#dc2626" }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#fee2e2"}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
                             Delete

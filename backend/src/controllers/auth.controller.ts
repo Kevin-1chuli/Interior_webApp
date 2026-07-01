@@ -69,12 +69,23 @@ export const createStaff = async (req: AuthRequest, res: Response) => {
     }
 
     // Check if username already exists
-    const existing = await prisma.user.findUnique({ where: { username } });
-    if (existing) {
+    const existingUser = await prisma.user.findUnique({ where: { username } });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         message: 'Username already exists'
       });
+    }
+
+    // Check if email already exists (if provided)
+    if (email) {
+      const existingEmail = await prisma.user.findFirst({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already exists'
+        });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -83,7 +94,7 @@ export const createStaff = async (req: AuthRequest, res: Response) => {
       data: {
         username,
         password: hashedPassword,
-        email,
+        email: email || null,
         role: 'STAFF'
       }
     });
@@ -97,8 +108,20 @@ export const createStaff = async (req: AuthRequest, res: Response) => {
         role: staff.role
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create staff error:', error);
+    
+    // Handle Prisma unique constraint errors
+    if (error.code === 'P2002') {
+      const target = error.meta?.target;
+      if (target?.includes('username')) {
+        return res.status(400).json({ success: false, message: 'Username already exists' });
+      }
+      if (target?.includes('email')) {
+        return res.status(400).json({ success: false, message: 'Email already exists' });
+      }
+    }
+    
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
