@@ -1,0 +1,6 @@
+# Exclude backend folder from Vercel build
+backend/
+backend/**
+*.md
+DASHBOARD_REDESIGN_SUMMARY.md
+DEPLOYMENT.md

@@ -39,6 +39,9 @@
   "exclude": [
     "node_modules",
     "NGB webApp",
-    "backend"
+    "backend",
+    "backend/**/*",
+    "backend/**/*.ts",
+    "backend/**/*.tsx"
   ]
 }
