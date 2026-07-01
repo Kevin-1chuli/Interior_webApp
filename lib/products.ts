@@ -1,4 +1,3 @@
-import { PRODS } from "./data";
 import type { CatId, Prod } from "./types";
 import { fetchProducts, ApiProduct } from "./api";
 
@@ -35,10 +34,10 @@ function groupByCategory(products: ApiProduct[]): Record<CatId, Prod[]> {
   return grouped;
 }
 
-// Cache for products
+// Cache for products - disabled to always show fresh data
 let cachedProducts: Record<CatId, Prod[]> | null = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 30000; // 30 seconds
+const CACHE_DURATION = 0; // Disabled - always fetch fresh data
 
 export async function getProducts(): Promise<Record<CatId, Prod[]>> {
   const now = Date.now();
@@ -50,22 +49,34 @@ export async function getProducts(): Promise<Record<CatId, Prod[]>> {
 
   try {
     const apiProducts = await fetchProducts();
-    if (apiProducts.length > 0) {
-      cachedProducts = groupByCategory(apiProducts);
-      lastFetchTime = now;
-      return cachedProducts;
-    }
+    // Always use API data, even if empty - shows real database state
+    cachedProducts = groupByCategory(apiProducts);
+    lastFetchTime = now;
+    return cachedProducts;
   } catch (error) {
-    console.error('Failed to fetch products, using fallback:', error);
+    console.error('Failed to fetch products from API:', error);
+    // Return empty categories instead of static fallback
+    return {
+      beds: [],
+      sofas: [],
+      wardrobes: [],
+      'tv-units': [],
+      dining: [],
+      'coffee-tables': []
+    };
   }
-
-  // Fallback to static data
-  return PRODS;
 }
 
 export function getAllProducts(): (Prod & { catId: CatId })[] {
-  // Use cached data or static fallback
-  const products = cachedProducts || PRODS;
+  // Use cached data or empty array
+  const products = cachedProducts || {
+    beds: [],
+    sofas: [],
+    wardrobes: [],
+    'tv-units': [],
+    dining: [],
+    'coffee-tables': []
+  };
   return (Object.keys(products) as CatId[]).flatMap((catId) =>
     products[catId].map((product) => ({ ...product, catId })),
   );

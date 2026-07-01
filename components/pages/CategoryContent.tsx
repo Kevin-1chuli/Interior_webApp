@@ -7,12 +7,18 @@ import {
 } from "@/components/NGBComponents";
 import { useAppUI } from "@/context/AppUIContext";
 import { getProducts } from "@/lib/products";
-import { PRODS } from "@/lib/data";
 import type { CatId, Prod } from "@/lib/types";
 
 export default function CategoryContent({ catId }: { catId: CatId }) {
   const { fav, setViewProd, toggleFav } = useAppUI();
-  const [products, setProducts] = useState<Record<CatId, Prod[]>>(PRODS);
+  const [products, setProducts] = useState<Record<CatId, Prod[]>>({
+    beds: [],
+    sofas: [],
+    wardrobes: [],
+    'tv-units': [],
+    dining: [],
+    'coffee-tables': []
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
