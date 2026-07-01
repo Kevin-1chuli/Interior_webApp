@@ -187,7 +187,7 @@ export function SeeAllCard({ catId, name, onNavigate }: { catId:CatId; name:stri
   const [h, setH] = useState(false);
   return (
     <button
-      onClick={()=>onNavigate(`/furniture/${catId}`)}
+      onClick={()=>onNavigate(catId)}
       onMouseEnter={()=>setH(true)}
       onMouseLeave={()=>setH(false)}
       className="w-full flex flex-col items-center justify-center"
@@ -262,7 +262,7 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, prod
     const el = scrollRef.current;
     if (!el) return;
     setCanPrev(el.scrollLeft > 8);
-    setCanNext(el.scrollLeft < el.scrollWidth - el.clientWidth - 8);
+    setCanNext(el.scrollLeft < el.clientWidth - 8);
   };
 
   const scrollCards = (dir:"prev"|"next") => {
@@ -272,6 +272,11 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, prod
   };
 
   const sectionBg = bg || WHITE;
+
+  // Don't render empty categories
+  if (!products || products.length === 0) {
+    return null;
+  }
 
   return (
     <section style={{ backgroundColor:sectionBg, paddingTop:10, paddingBottom:10 }}>
@@ -283,7 +288,7 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, prod
             <h2 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.1rem,2vw,1.5rem)", fontWeight:600, color:CHARCOAL, lineHeight:1.15 }}>{cat.name}</h2>
           </div>
           <button
-            onClick={()=>onNavigate(`/furniture/${catId}`)}
+            onClick={()=>onNavigate(catId)}
             className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
             style={{ fontFamily:SANS, fontSize:"0.7rem", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", color:CHARCOAL, background:"none", border:"none", cursor:"pointer", textDecoration:"underline", textUnderlineOffset:3 }}>
             See all <ArrowRight size={13} />
