@@ -15,7 +15,8 @@ export default function ProductsListPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/products');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/api/products`);
       const data = await response.json();
       if (data.success) {
         setProducts(data.data);
@@ -31,8 +32,9 @@ export default function ProductsListPage() {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`http://localhost:4000/api/products/${id}`, {
+      const response = await fetch(`${apiUrl}/api/products/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

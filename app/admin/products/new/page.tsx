@@ -68,7 +68,8 @@ export default function NewProductPage() {
         formDataToSend.append('images', image);
       });
 
-      const response = await fetch('http://localhost:4000/api/products', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/api/products`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

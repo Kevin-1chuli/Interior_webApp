@@ -47,7 +47,8 @@ export default function NewProjectPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:4000/api/projects', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
