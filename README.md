@@ -2,6 +2,17 @@
 
 A full-stack interior design and furniture e-commerce web application built with Next.js, Express, Prisma, and PostgreSQL.
 
+## ⚠️ Security Notice
+
+**NEVER commit the following files:**
+- `backend/.env` - Contains production secrets
+- `.env.local` - Contains local development secrets
+
+**All sensitive credentials (DATABASE_URL, JWT_SECRET, Cloudinary keys) must only be stored in:**
+- Local `.env` files (gitignored)
+- Production environment variables (Railway, Vercel)
+- Never in code or documentation files
+
 ## Features
 
 ### Public Website
@@ -244,10 +255,12 @@ Already configured for serverless PostgreSQL with connection pooling.
 
 ## Development Notes
 
-- The frontend uses hardcoded `http://localhost:4000` for API calls during development
-- In production, update API URLs to use environment variables
-- Password reset emails currently log to console (integrate email service for production)
-- Default credentials should be changed immediately after first deployment
+- ✅ **API Configuration**: Frontend uses `NEXT_PUBLIC_API_URL` environment variable with fallback to `http://localhost:4000` for development
+- ✅ **Environment-Based**: All API calls now use `process.env.NEXT_PUBLIC_API_URL` for production compatibility
+- ⚠️ **Production Setup**: Set `NEXT_PUBLIC_API_URL` in Vercel to your deployed backend URL
+- 📧 **Email Integration**: Password reset currently uses owner-managed approach (no email required)
+- 🔐 **Security**: Default credentials (`admin`/`ngb2024`) should be changed immediately after first deployment
+- 📚 **Deployment Guide**: See `DEPLOYMENT.md` and `QUICK_PRODUCTION_SETUP.md` for step-by-step production deployment
 
 ## License
 

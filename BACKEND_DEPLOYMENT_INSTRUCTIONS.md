@@ -24,22 +24,26 @@
 In Railway project → Variables tab, add these:
 
 ```env
-DATABASE_URL=postgresql://neondb_owner:npg_NQbBgR2Vv0rO@ep-icy-lab-at2qr4li-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=<your-neon-postgresql-connection-string-with-pooling>
 
 NODE_ENV=production
 
-JWT_SECRET=mIz9PgGxWpTb8ZBMdKkVRLe7vaOuHiQj4qSU0nYC5cy2NfEowtD31XlJr6FshA
+JWT_SECRET=<generate-secure-64-character-random-string>
 
-CLOUDINARY_CLOUD_NAME=dpx95lmxy
-CLOUDINARY_API_KEY=577165814967458
-CLOUDINARY_API_SECRET=Fq9gnZf-TArLhYppkMLABH8psNE
+CLOUDINARY_CLOUD_NAME=<your-cloudinary-cloud-name>
+CLOUDINARY_API_KEY=<your-cloudinary-api-key>
+CLOUDINARY_API_SECRET=<your-cloudinary-api-secret>
 
 FRONTEND_URL=https://your-vercel-app.vercel.app
 
 PORT=4000
 ```
 
-**⚠️ IMPORTANT:** Replace `https://your-vercel-app.vercel.app` with your actual Vercel URL
+**⚠️ Security Notes:**
+- **DATABASE_URL**: Get from Neon dashboard (use connection pooling URL ending in `-pooler`)
+- **JWT_SECRET**: Generate with: `openssl rand -base64 64` or use a password generator
+- **Cloudinary credentials**: Get from Cloudinary dashboard → Settings → Access Keys
+- **FRONTEND_URL**: Replace with your actual Vercel deployment URL
 
 ### Step 5: Deploy
 1. Railway will automatically start deploying
