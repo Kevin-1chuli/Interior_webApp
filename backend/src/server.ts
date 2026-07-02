@@ -45,8 +45,9 @@ async function startServer() {
       console.warn('Current value:', process.env.CLOUDINARY_CLOUD_NAME);
     }
 
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`✓ Server running on port ${PORT}`);
+      console.log(`✓ Listening on 0.0.0.0:${PORT}`);
       console.log(`✓ Health check: http://localhost:${PORT}/health`);
     });
   } catch (error) {
