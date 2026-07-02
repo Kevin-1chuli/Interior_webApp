@@ -1,6 +1,7 @@
-import { getApiUrl } from "@/lib/config";
+import { config } from "@/lib/config";
 
-const API_URL = getApiUrl('');
+// Direct API URL without getApiUrl wrapper to avoid double /api/
+const API_BASE_URL = config.apiUrl;
 
 export interface ApiProduct {
   id: string;
@@ -35,7 +36,22 @@ export interface ApiProject {
 
 export async function fetchProducts(): Promise<ApiProduct[]> {
   try {
-    const response = await fetch(`${API_URL}/products`);
+    const url = `${API_BASE_URL}/api/products`;
+    console.log('Fetching products from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store', // Disable caching for fresh data
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to fetch products:', response.status, response.statusText);
+      return [];
+    }
+    
     const data = await response.json();
     return data.success ? data.data : [];
   } catch (error) {
@@ -46,7 +62,22 @@ export async function fetchProducts(): Promise<ApiProduct[]> {
 
 export async function fetchProjects(): Promise<ApiProject[]> {
   try {
-    const response = await fetch(`${API_URL}/projects`);
+    const url = `${API_BASE_URL}/api/projects`;
+    console.log('Fetching projects from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store', // Disable caching for fresh data
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to fetch projects:', response.status, response.statusText);
+      return [];
+    }
+    
     const data = await response.json();
     return data.success ? data.data : [];
   } catch (error) {

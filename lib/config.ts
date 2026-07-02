@@ -17,12 +17,14 @@ export const config = {
 
 /**
  * Get full API endpoint URL
+ * @param path - API path WITHOUT /api prefix (e.g., 'products', 'auth/login')
+ * @returns Full URL (e.g., 'http://localhost:4000/api/products')
  */
 export function getApiUrl(path: string): string {
   // Remove leading slash if present
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
-  // Remove /api prefix if already in path (to avoid duplication)
+  // Add /api prefix if not already present
   const finalPath = cleanPath.startsWith('api/') ? cleanPath : `api/${cleanPath}`;
   
   return `${config.apiUrl}/${finalPath}`;
