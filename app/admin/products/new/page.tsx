@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/config";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -68,8 +69,7 @@ export default function NewProductPage() {
         formDataToSend.append('images', image);
       });
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const response = await fetch(`${apiUrl}/api/products`, {
+      const response = await fetch(getApiUrl('products'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

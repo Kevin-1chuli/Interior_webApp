@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/config";
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -47,8 +48,7 @@ export default function NewProjectPage() {
         return;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const response = await fetch(`${apiUrl}/api/projects`, {
+      const response = await fetch(getApiUrl('projects'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

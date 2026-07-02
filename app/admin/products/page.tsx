@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Search, Sofa, Trash2, Edit, Calendar } from "lucide-react";
+import { getApiUrl } from "@/lib/config";
 
 export default function ProductsListPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -15,8 +16,7 @@ export default function ProductsListPage() {
 
   const fetchProducts = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const response = await fetch(`${apiUrl}/api/products`);
+      const response = await fetch(getApiUrl('products'));
       const data = await response.json();
       if (data.success) {
         setProducts(data.data);
@@ -32,9 +32,8 @@ export default function ProductsListPage() {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const token = localStorage.getItem('admin_token');
-      const response = await fetch(`${apiUrl}/api/products/${id}`, {
+      const response = await fetch(getApiUrl(`products/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
