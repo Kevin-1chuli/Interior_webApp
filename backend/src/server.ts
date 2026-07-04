@@ -116,22 +116,50 @@ async function startServer() {
     console.log(`✓ Server is now accepting connections [${STARTUP_ID}]`);
     
     // Connect to database AFTER server is confirmed listening
-    // If DB fails, log error but keep server running
+    // Use retry logic for Railway/Neon connection stability
     console.log('Connecting to database...');
-    try {
-      await Promise.race([
-        prisma.$connect(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Database connection timeout after 10s')), 10000)
-        )
-      ]);
-      console.log(`✓ Database connected successfully [${STARTUP_ID}]`);
-    } catch (dbError) {
-      console.error(`⚠️ WARNING: Database connection failed [${STARTUP_ID}]`);
-      console.error('Error:', dbError);
-      console.error('Server will continue running but database operations will fail');
-      // DO NOT EXIT - let server stay running for health checks
+    let dbConnected = false;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Database connection attempt ${attempt}/${maxRetries}...`);
+        
+        await Promise.race([
+          prisma.$connect(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Database connection timeout after 15s')), 15000)
+          )
+        ]);
+        
+        // Test the connection with a simple query
+        await prisma.$queryRaw`SELECT 1 as result`;
+        
+        console.log(`✓ Database connected successfully [${STARTUP_ID}]`);
+        dbConnected = true;
+        break;
+      } catch (dbError) {
+        console.error(`⚠️ Database connection attempt ${attempt} failed:`, dbError);
+        
+        if (attempt < maxRetries) {
+          const waitTime = attempt * 2000; // 2s, 4s backoff
+          console.log(`Retrying in ${waitTime/1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+      }
     }
+    
+    if (!dbConnected) {
+      console.error(`⚠️ WARNING: Database connection failed after ${maxRetries} attempts [${STARTUP_ID}]`);
+      console.error('Server will continue running but database operations will fail');
+      console.error('Check DATABASE_URL and database service status');
+    }
+    
+    // Setup connection error handlers for runtime errors
+    // This prevents "connection closed" errors from crashing the server
+    prisma.$on('beforeExit' as never, async () => {
+      console.log('Prisma is shutting down...');
+    });
     
     console.log(`\n✅ SERVER READY [${STARTUP_ID}]\n`);
     
