@@ -8,6 +8,21 @@ import { errorHandler } from './middleware/error.middleware';
 
 const app = express();
 
+// Health check FIRST - before any middleware
+// This ensures Railway health checks always work
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Root endpoint - also before middleware
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'NGB Interior Backend API',
+    version: '1.0.0',
+    status: 'running'
+  });
+});
+
 // CORS configuration - Allow both localhost and production frontend
 const allowedOrigins = [
   'http://localhost:3000',
@@ -49,24 +64,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path} - Origin: ${req.get('origin') || 'none'}`);
   next();
-});
-
-// Health check - must respond quickly
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'NGB Interior Backend API',
-    version: '1.0.0',
-    status: 'running'
-  });
 });
 
 // API routes
