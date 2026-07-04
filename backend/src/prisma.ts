@@ -24,8 +24,8 @@ function getConnectionUrl(): string {
   return url;
 }
 
-// Prisma client with production-ready connection pooling and error handling
-// Using singleton pattern to prevent multiple instances
+// Prisma client singleton - standard Prisma v5 initialization
+// No custom overrides, no lifecycle hooks, no method wrapping
 const prisma = global.prisma || new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   datasources: {
@@ -39,19 +39,5 @@ const prisma = global.prisma || new PrismaClient({
 if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;
 }
-
-// Graceful error handling for connection issues
-const originalConnect = prisma.$connect.bind(prisma);
-prisma.$connect = async function() {
-  try {
-    return await originalConnect();
-  } catch (error) {
-    console.error('Failed to connect to database:', error);
-    throw error;
-  }
-};
-
-// Do NOT auto-connect on import - let server.ts handle connection
-// This prevents crashes during module loading
 
 export default prisma;
