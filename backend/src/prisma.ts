@@ -40,11 +40,6 @@ if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;
 }
 
-// Handle Prisma errors gracefully - don't let connection issues crash the app
-prisma.$on('error' as never, (e: any) => {
-  console.error('⚠️ Prisma client error event:', e);
-});
-
 // Graceful error handling for connection issues
 const originalConnect = prisma.$connect.bind(prisma);
 prisma.$connect = async function() {

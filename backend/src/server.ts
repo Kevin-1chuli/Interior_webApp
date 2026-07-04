@@ -155,12 +155,6 @@ async function startServer() {
       console.error('Check DATABASE_URL and database service status');
     }
     
-    // Setup connection error handlers for runtime errors
-    // This prevents "connection closed" errors from crashing the server
-    prisma.$on('beforeExit' as never, async () => {
-      console.log('Prisma is shutting down...');
-    });
-    
     console.log(`\n✅ SERVER READY [${STARTUP_ID}]\n`);
     
     // Keep process alive and log heartbeat
