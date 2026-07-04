@@ -1,3 +1,16 @@
+// Catch unhandled errors FIRST - before any imports
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise);
+  console.error('Reason:', reason);
+  // Don't exit on unhandled rejection, just log it
+});
+
 import dotenv from 'dotenv';
 
 // Load .env file ONLY in development (Railway provides env vars directly)
@@ -113,17 +126,6 @@ process.on('SIGTERM', async () => {
   await prisma.$disconnect();
   console.log('✓ Database disconnected');
   process.exit(0);
-});
-
-// Catch unhandled errors
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise);
-  console.error('Reason:', reason);
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  process.exit(1);
 });
 
 startServer();
