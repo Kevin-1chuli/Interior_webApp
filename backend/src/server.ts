@@ -77,10 +77,9 @@ async function startServer() {
     console.log('Environment:', process.env.NODE_ENV || 'development');
     
     // Start server IMMEDIATELY on 0.0.0.0 (Railway requirement)
-    // This must happen BEFORE database connection to pass health checks
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`✓ Server listening on 0.0.0.0:${PORT}`);
-      console.log(`✓ Health check: http://0.0.0.0:${PORT}/health`);
+      console.log(`✓ Health check available at: http://0.0.0.0:${PORT}/health`);
       console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
       serverStarted = true;
     });
@@ -94,7 +93,18 @@ async function startServer() {
       process.exit(1);
     });
 
-    // Connect to database AFTER server starts
+    // Wait for server to be listening before continuing
+    await new Promise<void>((resolve) => {
+      if (serverStarted) {
+        resolve();
+      } else {
+        server.on('listening', () => resolve());
+      }
+    });
+
+    console.log('✓ Server is now accepting connections');
+    
+    // Connect to database AFTER server is confirmed listening
     // If DB fails, log error but keep server running
     console.log('Connecting to database...');
     try {
