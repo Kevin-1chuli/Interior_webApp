@@ -66,11 +66,17 @@ if (!process.env.PORT) {
 
 const PORT = parseInt(process.env.PORT, 10);
 
+// Add startup timestamp to detect duplicate initializations
+const STARTUP_ID = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+console.log(`🚀 SERVER INITIALIZATION ID: ${STARTUP_ID}`);
+
 async function startServer() {
   let serverStarted = false;
   
   try {
     console.log('\n=== Server Startup ===');
+    console.log('Startup ID:', STARTUP_ID);
+    console.log('Process PID:', process.pid);
     console.log('Starting server...');
     console.log('PORT:', PORT);
     console.log('PORT from env:', process.env.PORT);
@@ -78,17 +84,19 @@ async function startServer() {
     
     // Start server IMMEDIATELY on 0.0.0.0 (Railway requirement)
     const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✓ Server listening on 0.0.0.0:${PORT}`);
-      console.log(`✓ Health check available at: http://0.0.0.0:${PORT}/health`);
+      console.log(`\n✅ SERVER LISTENING - ID: ${STARTUP_ID}`);
+      console.log(`✓ Bound to: 0.0.0.0:${PORT}`);
+      console.log(`✓ Process ID: ${process.pid}`);
+      console.log(`✓ Health check: http://0.0.0.0:${PORT}/health`);
       console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
       serverStarted = true;
     });
 
     // Handle server errors
     server.on('error', (error: NodeJS.ErrnoException) => {
-      console.error('❌ Server error:', error);
+      console.error(`❌ Server error [${STARTUP_ID}]:`, error);
       if (error.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use`);
+        console.error(`Port ${PORT} is already in use by another process`);
       }
       process.exit(1);
     });
@@ -98,11 +106,14 @@ async function startServer() {
       if (serverStarted) {
         resolve();
       } else {
-        server.on('listening', () => resolve());
+        server.on('listening', () => {
+          console.log(`✓ Server 'listening' event fired [${STARTUP_ID}]`);
+          resolve();
+        });
       }
     });
 
-    console.log('✓ Server is now accepting connections');
+    console.log(`✓ Server is now accepting connections [${STARTUP_ID}]`);
     
     // Connect to database AFTER server is confirmed listening
     // If DB fails, log error but keep server running
@@ -114,23 +125,27 @@ async function startServer() {
           setTimeout(() => reject(new Error('Database connection timeout after 10s')), 10000)
         )
       ]);
-      console.log('✓ Database connected successfully');
+      console.log(`✓ Database connected successfully [${STARTUP_ID}]`);
     } catch (dbError) {
-      console.error('⚠️ WARNING: Database connection failed');
+      console.error(`⚠️ WARNING: Database connection failed [${STARTUP_ID}]`);
       console.error('Error:', dbError);
       console.error('Server will continue running but database operations will fail');
       // DO NOT EXIT - let server stay running for health checks
     }
     
-    console.log('=== Server Ready ===\n');
+    console.log(`\n✅ SERVER READY [${STARTUP_ID}]\n`);
     
-    // Keep process alive
+    // Keep process alive and log heartbeat
+    let heartbeatCount = 0;
     setInterval(() => {
-      // Heartbeat to prevent process from exiting
+      heartbeatCount++;
+      if (heartbeatCount % 10 === 0) {
+        console.log(`💓 Heartbeat #${heartbeatCount} [${STARTUP_ID}] - Server is alive`);
+      }
     }, 60000);
     
   } catch (error) {
-    console.error('\n❌ FATAL: Server failed to start');
+    console.error(`\n❌ FATAL: Server failed to start [${STARTUP_ID}]`);
     console.error('Error:', error);
     if (error instanceof Error) {
       console.error('Message:', error.message);

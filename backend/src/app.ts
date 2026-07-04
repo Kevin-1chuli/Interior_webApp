@@ -11,7 +11,13 @@ const app = express();
 // Health check FIRST - before any middleware
 // This ensures Railway health checks always work
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  const now = new Date().toISOString();
+  console.log(`[${now}] Health check received from ${req.ip || 'unknown'}`);
+  res.status(200).json({ 
+    status: 'ok',
+    timestamp: now,
+    uptime: process.uptime()
+  });
 });
 
 // Root endpoint - also before middleware
