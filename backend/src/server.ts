@@ -44,14 +44,20 @@ if (process.env.FRONTEND_URL) {
 import app from './app';
 import prisma from './prisma';
 
-const PORT = parseInt(process.env.PORT || '3000', 10);
+// Railway provides PORT - no fallback needed
+if (!process.env.PORT) {
+  console.error('❌ CRITICAL: PORT environment variable not set');
+  console.error('Railway must provide PORT. If running locally, set PORT in .env');
+  process.exit(1);
+}
+
+const PORT = parseInt(process.env.PORT, 10);
 
 async function startServer() {
   try {
     console.log('\n=== Server Startup ===');
     console.log('Starting server...');
     console.log('PORT:', PORT);
-    console.log('PORT type:', typeof PORT);
     console.log('PORT from env:', process.env.PORT);
     console.log('Environment:', process.env.NODE_ENV || 'development');
     
