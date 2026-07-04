@@ -10,15 +10,7 @@ const prisma = new PrismaClient({
   },
 });
 
-// Test connection on init
-prisma.$connect()
-  .then(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Prisma Client: Connection pool initialized');
-    }
-  })
-  .catch((error) => {
-    console.error('Prisma Client: Failed to initialize connection pool:', error);
-  });
+// Do NOT auto-connect on import - let server.ts handle connection
+// This prevents crashes during module loading
 
 export default prisma;
