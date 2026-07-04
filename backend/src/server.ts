@@ -67,6 +67,8 @@ if (!process.env.PORT) {
 const PORT = parseInt(process.env.PORT, 10);
 
 async function startServer() {
+  let serverStarted = false;
+  
   try {
     console.log('\n=== Server Startup ===');
     console.log('Starting server...');
@@ -80,6 +82,7 @@ async function startServer() {
       console.log(`✓ Server listening on 0.0.0.0:${PORT}`);
       console.log(`✓ Health check: http://0.0.0.0:${PORT}/health`);
       console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+      serverStarted = true;
     });
 
     // Handle server errors
@@ -92,15 +95,30 @@ async function startServer() {
     });
 
     // Connect to database AFTER server starts
+    // If DB fails, log error but keep server running
     console.log('Connecting to database...');
-    await Promise.race([
-      prisma.$connect(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database connection timeout after 10s')), 10000)
-      )
-    ]);
-    console.log('✓ Database connected successfully');
+    try {
+      await Promise.race([
+        prisma.$connect(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database connection timeout after 10s')), 10000)
+        )
+      ]);
+      console.log('✓ Database connected successfully');
+    } catch (dbError) {
+      console.error('⚠️ WARNING: Database connection failed');
+      console.error('Error:', dbError);
+      console.error('Server will continue running but database operations will fail');
+      // DO NOT EXIT - let server stay running for health checks
+    }
+    
     console.log('=== Server Ready ===\n');
+    
+    // Keep process alive
+    setInterval(() => {
+      // Heartbeat to prevent process from exiting
+    }, 60000);
+    
   } catch (error) {
     console.error('\n❌ FATAL: Server failed to start');
     console.error('Error:', error);
@@ -108,8 +126,12 @@ async function startServer() {
       console.error('Message:', error.message);
       console.error('Stack:', error.stack);
     }
-    await prisma.$disconnect();
-    process.exit(1);
+    
+    // Only exit if server didn't start
+    if (!serverStarted) {
+      await prisma.$disconnect();
+      process.exit(1);
+    }
   }
 }
 
