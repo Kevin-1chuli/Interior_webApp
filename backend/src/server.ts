@@ -44,16 +44,35 @@ if (process.env.FRONTEND_URL) {
 import app from './app';
 import prisma from './prisma';
 
-const PORT = parseInt(process.env.PORT || '5000', 10);
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 async function startServer() {
   try {
     console.log('\n=== Server Startup ===');
     console.log('Starting server...');
     console.log('PORT:', PORT);
+    console.log('PORT type:', typeof PORT);
+    console.log('PORT from env:', process.env.PORT);
     console.log('Environment:', process.env.NODE_ENV || 'development');
     
-    // Test database connection with timeout
+    // Start server IMMEDIATELY on 0.0.0.0 (Railway requirement)
+    // This must happen BEFORE database connection to pass health checks
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`✓ Server listening on 0.0.0.0:${PORT}`);
+      console.log(`✓ Health check: http://0.0.0.0:${PORT}/health`);
+      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+
+    // Handle server errors
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      console.error('❌ Server error:', error);
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use`);
+      }
+      process.exit(1);
+    });
+
+    // Connect to database AFTER server starts
     console.log('Connecting to database...');
     await Promise.race([
       prisma.$connect(),
@@ -62,14 +81,7 @@ async function startServer() {
       )
     ]);
     console.log('✓ Database connected successfully');
-
-    // Start server on 0.0.0.0 (Railway requirement)
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✓ Server running on 0.0.0.0:${PORT}`);
-      console.log(`✓ Health check: http://0.0.0.0:${PORT}/health`);
-      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log('=== Server Ready ===\n');
-    });
+    console.log('=== Server Ready ===\n');
   } catch (error) {
     console.error('\n❌ FATAL: Server failed to start');
     console.error('Error:', error);
