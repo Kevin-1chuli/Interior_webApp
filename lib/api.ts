@@ -3,6 +3,10 @@ import { config } from "@/lib/config";
 // Direct API URL without getApiUrl wrapper to avoid double /api/
 const API_BASE_URL = config.apiUrl;
 
+// Log the API base URL for debugging
+console.log('[lib/api.ts] API_BASE_URL:', API_BASE_URL);
+console.log('[lib/api.ts] NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL || 'NOT SET');
+
 export interface ApiProduct {
   id: string;
   name: string;
@@ -37,7 +41,7 @@ export interface ApiProject {
 export async function fetchProducts(): Promise<ApiProduct[]> {
   try {
     const url = `${API_BASE_URL}/api/products`;
-    console.log('Fetching products from:', url);
+    console.log('[fetchProducts] Fetching from:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -48,14 +52,17 @@ export async function fetchProducts(): Promise<ApiProduct[]> {
     });
     
     if (!response.ok) {
-      console.error('Failed to fetch products:', response.status, response.statusText);
+      console.error('[fetchProducts] HTTP Error:', response.status, response.statusText);
+      console.error('[fetchProducts] URL was:', url);
       return [];
     }
     
     const data = await response.json();
+    console.log('[fetchProducts] Success, got', data.data?.length || 0, 'products');
     return data.success ? data.data : [];
   } catch (error) {
-    console.error('Failed to fetch products:', error);
+    console.error('[fetchProducts] Network/Parse Error:', error);
+    console.error('[fetchProducts] API_BASE_URL:', API_BASE_URL);
     return [];
   }
 }
@@ -63,7 +70,7 @@ export async function fetchProducts(): Promise<ApiProduct[]> {
 export async function fetchProjects(): Promise<ApiProject[]> {
   try {
     const url = `${API_BASE_URL}/api/projects`;
-    console.log('Fetching projects from:', url);
+    console.log('[fetchProjects] Fetching from:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -74,14 +81,17 @@ export async function fetchProjects(): Promise<ApiProject[]> {
     });
     
     if (!response.ok) {
-      console.error('Failed to fetch projects:', response.status, response.statusText);
+      console.error('[fetchProjects] HTTP Error:', response.status, response.statusText);
+      console.error('[fetchProjects] URL was:', url);
       return [];
     }
     
     const data = await response.json();
+    console.log('[fetchProjects] Success, got', data.data?.length || 0, 'projects');
     return data.success ? data.data : [];
   } catch (error) {
-    console.error('Failed to fetch projects:', error);
+    console.error('[fetchProjects] Network/Parse Error:', error);
+    console.error('[fetchProjects] API_BASE_URL:', API_BASE_URL);
     return [];
   }
 }
