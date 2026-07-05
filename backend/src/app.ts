@@ -35,35 +35,43 @@ app.get('/', (req, res) => {
   });
 });
 
-// CORS configuration - Environment-aware origins
-// Production: Use ONLY FRONTEND_URL from Railway environment
-// Development: Allow localhost origins
+// CORS configuration - Multiple origins support
+// CRITICAL: Must support BOTH localhost (dev) AND Vercel (production)
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
+// Production Vercel URL - hardcoded fallback if env var missing
+const PRODUCTION_FRONTEND = 'https://interior-web-app-three.vercel.app';
+
 const allowedOrigins = [
-  // Localhost origins ONLY in development
+  // Always include production Vercel URL
+  PRODUCTION_FRONTEND,
+  // Also use FRONTEND_URL from environment if set
+  process.env.FRONTEND_URL,
+  // Localhost origins for development
   ...(isDevelopment ? [
     'http://localhost:3000',
     'http://localhost:3001',
   ] : []),
-  // Production frontend URL from Railway environment variable
-  process.env.FRONTEND_URL
-].filter(Boolean) as string[];
+].filter((origin, index, self) => 
+  origin && self.indexOf(origin) === index // Remove falsy and duplicates
+) as string[];
 
 console.log('=== CORS Configuration ===');
 console.log('Environment:', process.env.NODE_ENV || 'development');
 console.log('Is Development:', isDevelopment);
 console.log('FRONTEND_URL env var:', process.env.FRONTEND_URL || 'NOT SET');
+console.log('Production Vercel URL:', PRODUCTION_FRONTEND);
 console.log('Allowed origins:', allowedOrigins);
 console.log('========================');
 
 // Create CORS options object with standard configuration
 const corsOptions: cors.CorsOptions = {
-  origin: allowedOrigins, // Simple array - no callback
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 204,
+  preflightContinue: false
 };
 
 // Log all incoming requests with origin

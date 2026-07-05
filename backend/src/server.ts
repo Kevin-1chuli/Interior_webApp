@@ -92,13 +92,18 @@ async function startServer() {
     console.log('Environment:', process.env.NODE_ENV || 'development');
     
     // Start server IMMEDIATELY on 0.0.0.0 (Railway requirement)
+    // CRITICAL: Server MUST start listening before ANY database connection
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n✅ SERVER LISTENING - ID: ${STARTUP_ID}`);
       console.log(`✓ Bound to: 0.0.0.0:${PORT}`);
       console.log(`✓ Process ID: ${process.pid}`);
       console.log(`✓ Health check: http://0.0.0.0:${PORT}/health`);
       console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`✅ SERVER READY - Can accept requests NOW`);
       serverStarted = true;
+      
+      // Connect to database AFTER server is listening (background, non-blocking)
+      connectDatabase();
     });
 
     // Log ALL incoming connections at TCP level
@@ -120,61 +125,46 @@ async function startServer() {
       process.exit(1);
     });
 
-    // Wait for server to be listening before continuing
-    await new Promise<void>((resolve) => {
-      if (serverStarted) {
-        resolve();
-      } else {
-        server.on('listening', () => {
-          console.log(`✓ Server 'listening' event fired [${STARTUP_ID}]`);
-          resolve();
-        });
-      }
-    });
-
-    console.log(`✓ Server is now accepting connections [${STARTUP_ID}]`);
-    
-    // Connect to database AFTER server is confirmed listening
-    // Use retry logic for Railway/Neon connection stability
-    console.log('Connecting to database...');
-    let dbConnected = false;
-    const maxRetries = 3;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`Database connection attempt ${attempt}/${maxRetries}...`);
-        
-        await Promise.race([
-          prisma.$connect(),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Database connection timeout after 15s')), 15000)
-          )
-        ]);
-        
-        // Test the connection with a simple query
-        await prisma.$queryRaw`SELECT 1 as result`;
-        
-        console.log(`✓ Database connected successfully [${STARTUP_ID}]`);
-        dbConnected = true;
-        break;
-      } catch (dbError) {
-        console.error(`⚠️ Database connection attempt ${attempt} failed:`, dbError);
-        
-        if (attempt < maxRetries) {
-          const waitTime = attempt * 2000; // 2s, 4s backoff
-          console.log(`Retrying in ${waitTime/1000}s...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+    // Database connection function - runs in background, non-blocking
+    async function connectDatabase() {
+      console.log('\n=== Background Database Connection ===');
+      console.log('Connecting to database (non-blocking)...');
+      let dbConnected = false;
+      const maxRetries = 3;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`Database connection attempt ${attempt}/${maxRetries}...`);
+          
+          await Promise.race([
+            prisma.$connect(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Database connection timeout after 15s')), 15000)
+            )
+          ]);
+          
+          // Test the connection with a simple query
+          await prisma.$queryRaw`SELECT 1 as result`;
+          
+          console.log(`✓ Database connected successfully [${STARTUP_ID}]`);
+          dbConnected = true;
+          break;
+        } catch (dbError) {
+          console.error(`⚠️ Database connection attempt ${attempt} failed:`, dbError);
+          
+          if (attempt < maxRetries) {
+            const waitTime = attempt * 2000; // 2s, 4s backoff
+            console.log(`Retrying in ${waitTime/1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          }
         }
       }
+      
+      if (!dbConnected) {
+        console.error(`⚠️ WARNING: Database connection failed after ${maxRetries} attempts [${STARTUP_ID}]`);
+        console.error('Server continues running - API will return 503 for DB operations');
+      }
     }
-    
-    if (!dbConnected) {
-      console.error(`⚠️ WARNING: Database connection failed after ${maxRetries} attempts [${STARTUP_ID}]`);
-      console.error('Server will continue running but database operations will fail');
-      console.error('Check DATABASE_URL and database service status');
-    }
-    
-    console.log(`\n✅ SERVER READY [${STARTUP_ID}]\n`);
     
     // Keep process alive and log heartbeat
     let heartbeatCount = 0;
