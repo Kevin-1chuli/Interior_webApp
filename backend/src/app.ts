@@ -29,19 +29,33 @@ app.get('/', (req, res) => {
   });
 });
 
-// CORS configuration - Allow both localhost and production frontend
+// CORS configuration - Environment-aware origins
+// Production: Use ONLY FRONTEND_URL from Railway environment
+// Development: Allow localhost origins
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
+  // Localhost origins ONLY in development
+  ...(isDevelopment ? [
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ] : []),
+  // Production frontend URL from Railway environment variable
   process.env.FRONTEND_URL
 ].filter(Boolean) as string[];
 
-console.log('CORS allowed origins:', allowedOrigins);
+console.log('=== CORS Configuration ===');
+console.log('Environment:', process.env.NODE_ENV || 'development');
+console.log('Is Development:', isDevelopment);
+console.log('FRONTEND_URL env var:', process.env.FRONTEND_URL || 'NOT SET');
+console.log('Allowed origins:', allowedOrigins);
+console.log('========================');
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, curl, etc.)
     if (!origin) {
+      console.log('[CORS] Allowing request with no origin (mobile/Postman/curl)');
       return callback(null, true);
     }
     
@@ -51,9 +65,11 @@ app.use(cors({
     );
     
     if (isAllowed) {
+      console.log('[CORS] ✓ Allowed origin:', origin);
       callback(null, true);
     } else {
-      console.warn('CORS blocked origin:', origin);
+      console.warn('[CORS] ✗ BLOCKED origin:', origin);
+      console.warn('[CORS] Allowed origins:', allowedOrigins);
       callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
     }
   },

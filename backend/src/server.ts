@@ -47,12 +47,21 @@ if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !pr
   console.log('✓ Cloudinary configured:', process.env.CLOUDINARY_CLOUD_NAME);
 }
 
-// Check FRONTEND_URL
+// Check FRONTEND_URL - CRITICAL for CORS in production
+console.log('=== FRONTEND_URL Configuration ===');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 if (process.env.FRONTEND_URL) {
   console.log('✓ FRONTEND_URL configured:', process.env.FRONTEND_URL);
+  console.log('✓ CORS will allow:', process.env.FRONTEND_URL);
 } else {
-  console.warn('⚠ WARNING: FRONTEND_URL not set - CORS may block requests');
+  console.error('❌ CRITICAL: FRONTEND_URL not set!');
+  console.error('Production CORS will BLOCK frontend requests!');
+  console.error('Set FRONTEND_URL in Railway to your Vercel URL');
+  if (process.env.NODE_ENV === 'production') {
+    console.error('⚠️ Running in PRODUCTION without FRONTEND_URL - CORS will fail!');
+  }
 }
+console.log('==================================');
 
 import app from './app';
 import prisma from './prisma';
