@@ -51,61 +51,40 @@ console.log('FRONTEND_URL env var:', process.env.FRONTEND_URL || 'NOT SET');
 console.log('Allowed origins:', allowedOrigins);
 console.log('========================');
 
-// Create CORS options object
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
-    if (!origin) {
-      console.log('[CORS] Allowing request with no origin (mobile/Postman/curl)');
-      return callback(null, true);
-    }
-    
-    // Check if origin is allowed
-    const isAllowed = allowedOrigins.some(allowed => 
-      origin === allowed || origin.startsWith(allowed)
-    );
-    
-    if (isAllowed) {
-      console.log('[CORS] ✓ Allowed origin:', origin);
-      callback(null, true);
-    } else {
-      console.warn('[CORS] ✗ BLOCKED origin:', origin);
-      console.warn('[CORS] Allowed origins:', allowedOrigins);
-      // Don't throw error - just return false to reject
-      callback(null, false);
-    }
-  },
+// Create CORS options object with standard configuration
+const corsOptions: cors.CorsOptions = {
+  origin: allowedOrigins, // Simple array - no callback
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 204 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 204
 };
+
+// Log all incoming requests with origin
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  const method = req.method;
+  
+  if (method === 'OPTIONS') {
+    console.log(`[${method}] Preflight from: ${origin || 'no-origin'} → ${req.path}`);
+    console.log(`  Access-Control-Request-Method: ${req.get('access-control-request-method') || 'none'}`);
+    console.log(`  Access-Control-Request-Headers: ${req.get('access-control-request-headers') || 'none'}`);
+  } else {
+    console.log(`[${method}] Request from: ${origin || 'no-origin'} → ${req.path}`);
+  }
+  
+  next();
+});
 
 // Apply CORS middleware BEFORE routes
 app.use(cors(corsOptions));
 
-// Handle preflight requests for all routes
+// Handle preflight OPTIONS requests for all routes
 app.options('*', cors(corsOptions));
-
-// Log all OPTIONS requests
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    console.log(`[OPTIONS] Preflight request from: ${req.get('origin') || 'unknown'}`);
-    console.log(`[OPTIONS] Access-Control-Request-Method: ${req.get('access-control-request-method')}`);
-    console.log(`[OPTIONS] Access-Control-Request-Headers: ${req.get('access-control-request-headers')}`);
-  }
-  next();
-});
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Request logging for debugging
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path} - Origin: ${req.get('origin') || 'none'}`);
-  next();
-});
 
 // API routes
 app.use('/api/auth', authRoutes);
