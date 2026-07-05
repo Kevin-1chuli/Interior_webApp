@@ -101,6 +101,16 @@ async function startServer() {
       serverStarted = true;
     });
 
+    // Log ALL incoming connections at TCP level
+    server.on('connection', (socket) => {
+      console.log(`[SERVER] New connection from ${socket.remoteAddress}:${socket.remotePort}`);
+    });
+
+    // Log when Express receives a request
+    server.on('request', (req) => {
+      console.log(`[SERVER] Request received: ${req.method} ${req.url}`);
+    });
+
     // Handle server errors
     server.on('error', (error: NodeJS.ErrnoException) => {
       console.error(`❌ Server error [${STARTUP_ID}]:`, error);

@@ -8,11 +8,17 @@ import { errorHandler } from './middleware/error.middleware';
 
 const app = express();
 
+// Log every incoming request at the very top
+app.use((req, res, next) => {
+  console.log(`[EXPRESS] Incoming ${req.method} ${req.url} from ${req.ip}`);
+  next();
+});
+
 // Health check FIRST - before any middleware
 // This ensures Railway health checks always work
 app.get('/health', (req, res) => {
   const now = new Date().toISOString();
-  console.log(`[${now}] Health check received from ${req.ip || 'unknown'}`);
+  console.log(`[HEALTH] ${now} Health check received from ${req.ip || 'unknown'}`);
   res.status(200).json({ 
     status: 'ok',
     timestamp: now,
