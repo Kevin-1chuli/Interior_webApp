@@ -1,3 +1,7 @@
+console.log('=== BOOT_START ===');
+console.log('Node version:', process.version);
+console.log('CWD:', process.cwd());
+
 // Catch unhandled errors FIRST - before any imports
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
@@ -22,6 +26,8 @@ if (process.env.NODE_ENV !== 'production') {
 console.log('=== Environment Variables Check ===');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT);
+console.log('PORT type:', typeof process.env.PORT);
+console.log('PORT parsed:', parseInt(process.env.PORT || '0', 10));
 
 // Verify critical environment variables
 if (!process.env.JWT_SECRET) {
@@ -63,8 +69,12 @@ if (process.env.FRONTEND_URL) {
 }
 console.log('==================================');
 
+console.log('=== IMPORTING APP ===');
 import app from './app';
+console.log('=== APP IMPORTED ===');
+
 import prisma from './prisma';
+console.log('=== PRISMA IMPORTED ===');
 
 // Railway provides PORT - no fallback needed
 if (!process.env.PORT) {
@@ -93,13 +103,14 @@ async function startServer() {
     
     // Start server IMMEDIATELY on 0.0.0.0 (Railway requirement)
     // CRITICAL: Server MUST start listening before ANY database connection
+    console.log('=== ATTEMPTING app.listen() ===');
+    console.log('Binding to PORT:', PORT, 'Host: 0.0.0.0');
+    
     const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n✅ SERVER LISTENING - ID: ${STARTUP_ID}`);
-      console.log(`✓ Bound to: 0.0.0.0:${PORT}`);
-      console.log(`✓ Process ID: ${process.pid}`);
-      console.log(`✓ Health check: http://0.0.0.0:${PORT}/health`);
-      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`✅ SERVER READY - Can accept requests NOW`);
+      console.log('=== LISTENING_CONFIRMED ===');
+      console.log(`✓ Server listening on 0.0.0.0:${PORT}`);
+      console.log(`✓ Process PID: ${process.pid}`);
+      console.log(`✓ Health endpoint: /health`);
       serverStarted = true;
       
       // Connect to database AFTER server is listening (background, non-blocking)

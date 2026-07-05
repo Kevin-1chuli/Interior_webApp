@@ -6,17 +6,20 @@ import projectsRoutes from './routes/projects.routes';
 import testRoutes from './routes/test.routes';
 import { errorHandler } from './middleware/error.middleware';
 
+console.log('=== EXPRESS_INIT ===');
+
 const app = express();
 
 // Log every incoming request at the very top
 app.use((req, res, next) => {
-  console.log(`[EXPRESS] Incoming ${req.method} ${req.url} from ${req.ip}`);
+  console.log(`=== REQUEST_HIT: ${req.method} ${req.url} from ${req.ip} ===`);
   next();
 });
 
 // Health check FIRST - before any middleware
 // This ensures Railway health checks always work
 app.get('/health', (req, res) => {
+  console.log('=== HEALTH_HIT ===');
   const now = new Date().toISOString();
   console.log(`[HEALTH] ${now} Health check received from ${req.ip || 'unknown'}`);
   res.status(200).json({ 
