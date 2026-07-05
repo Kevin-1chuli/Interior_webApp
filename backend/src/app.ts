@@ -51,8 +51,9 @@ console.log('FRONTEND_URL env var:', process.env.FRONTEND_URL || 'NOT SET');
 console.log('Allowed origins:', allowedOrigins);
 console.log('========================');
 
-app.use(cors({
-  origin: (origin, callback) => {
+// Create CORS options object
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Allow requests with no origin (mobile apps, Postman, curl, etc.)
     if (!origin) {
       console.log('[CORS] Allowing request with no origin (mobile/Postman/curl)');
@@ -70,13 +71,31 @@ app.use(cors({
     } else {
       console.warn('[CORS] ✗ BLOCKED origin:', origin);
       console.warn('[CORS] Allowed origins:', allowedOrigins);
-      callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
+      // Don't throw error - just return false to reject
+      callback(null, false);
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+// Apply CORS middleware BEFORE routes
+app.use(cors(corsOptions));
+
+// Handle preflight requests for all routes
+app.options('*', cors(corsOptions));
+
+// Log all OPTIONS requests
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    console.log(`[OPTIONS] Preflight request from: ${req.get('origin') || 'unknown'}`);
+    console.log(`[OPTIONS] Access-Control-Request-Method: ${req.get('access-control-request-method')}`);
+    console.log(`[OPTIONS] Access-Control-Request-Headers: ${req.get('access-control-request-headers')}`);
+  }
+  next();
+});
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
