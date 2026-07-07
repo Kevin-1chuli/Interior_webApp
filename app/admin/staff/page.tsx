@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { authenticatedFetch, getToken, isOwner as checkIsOwner } from "@/lib/auth";
 import { getApiUrl } from "@/lib/config";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Users as UsersIcon, Key } from "lucide-react";
+import { Plus, Trash2, Users as UsersIcon, Key, Eye, EyeOff } from "lucide-react";
 
 interface Staff {
   id: string;
@@ -22,6 +22,8 @@ export default function StaffPage() {
   const [showResetPassword, setShowResetPassword] = useState<string | null>(null);
   const [formData, setFormData] = useState({ username: "", password: "", email: "" });
   const [resetPasswordData, setResetPasswordData] = useState({ newPassword: "", confirmPassword: "" });
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -299,6 +301,8 @@ export default function StaffPage() {
                                 setShowResetPassword(showResetPassword === member.id ? null : member.id);
                                 setError("");
                                 setResetPasswordData({ newPassword: "", confirmPassword: "" });
+                                setShowNewPassword(false);
+                                setShowConfirmPassword(false);
                               }}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                             >
@@ -325,25 +329,43 @@ export default function StaffPage() {
                                   <label className="block text-sm font-medium text-gray-700 mb-1">
                                     New Password
                                   </label>
-                                  <input
-                                    type="password"
-                                    value={resetPasswordData.newPassword}
-                                    onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                                    placeholder="Enter new password (min 6 characters)"
-                                  />
+                                  <div className="relative">
+                                    <input
+                                      type={showNewPassword ? "text" : "password"}
+                                      value={resetPasswordData.newPassword}
+                                      onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
+                                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                      placeholder="Enter new password (min 6 characters)"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowNewPassword(!showNewPassword)}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    >
+                                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Confirm Password
                                   </label>
-                                  <input
-                                    type="password"
-                                    value={resetPasswordData.confirmPassword}
-                                    onChange={(e) => setResetPasswordData({ ...resetPasswordData, confirmPassword: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                                    placeholder="Confirm new password"
-                                  />
+                                  <div className="relative">
+                                    <input
+                                      type={showConfirmPassword ? "text" : "password"}
+                                      value={resetPasswordData.confirmPassword}
+                                      onChange={(e) => setResetPasswordData({ ...resetPasswordData, confirmPassword: e.target.value })}
+                                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                      placeholder="Confirm new password"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                    >
+                                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                  </div>
                                 </div>
                                 {error && (
                                   <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
@@ -363,6 +385,8 @@ export default function StaffPage() {
                                       setShowResetPassword(null);
                                       setError("");
                                       setResetPasswordData({ newPassword: "", confirmPassword: "" });
+                                      setShowNewPassword(false);
+                                      setShowConfirmPassword(false);
                                     }}
                                     className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm rounded-lg font-medium transition-all"
                                   >

@@ -63,3 +63,38 @@ model Project {
   @@index([isFeatured])
   @@map("projects")
 }
+
+model Message {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model DesignRequest {
+  id           String   @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  projectType  String   @map("project_type")
+  budget       String?
+  location     String?
+  timeline     String?
+  description  String
+  isRead       Boolean  @default(false) @map("is_read")
+  status       String   @default("pending")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([isRead])
+  @@index([status])
+  @@index([createdAt])
+  @@map("design_requests")
+}

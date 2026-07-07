@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { fetchProjects } from "@/lib/api";
+import { authenticatedFetch } from "@/lib/auth";
+import { getApiUrl } from "@/lib/config";
 
 export default function ProjectsPage() {
+  const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,6 +25,31 @@ export default function ProjectsPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+
+    try {
+      const response = await authenticatedFetch(getApiUrl(`projects/${id}`), {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete project');
+      }
+
+      loadProjects();
+    } catch (error: any) {
+      console.error('Failed to delete:', error);
+      alert(`Failed to delete project: ${error.message}`);
+    }
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/admin/projects/${id}/edit`);
   };
 
   if (isLoading) {
@@ -80,8 +109,18 @@ export default function ProjectsPage() {
                       {project.isFeatured ? 'Featured' : 'Standard'}
                     </span>
                     <div className="text-sm space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">Edit</button>
-                      <button className="text-red-600 hover:text-red-900">Delete</button>
+                      <button 
+                        onClick={() => handleEdit(project.id)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(project.id, project.title)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>

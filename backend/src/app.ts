@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.routes';
 import productsRoutes from './routes/products.routes';
 import projectsRoutes from './routes/projects.routes';
+import contactRoutes from './routes/contact.routes';
 import testRoutes from './routes/test.routes';
 import { errorHandler } from './middleware/error.middleware';
 
@@ -107,6 +108,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/projects', projectsRoutes);
+app.use('/api/contact', contactRoutes);
 app.use('/api', testRoutes);
 
 // 404 handler

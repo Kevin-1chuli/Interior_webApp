@@ -32,7 +32,7 @@ export default function ProductsListPage() {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     try {
-      const token = localStorage.getItem('admin_token');
+      const token = localStorage.getItem('ngb_admin_token');
       const response = await fetch(getApiUrl(`products/${id}`), {
         method: 'DELETE',
         headers: {
