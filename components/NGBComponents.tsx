@@ -1947,23 +1947,38 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
   const mats = MATERIALS[prod.id] ?? [];
   const waMsg = encodeURIComponent(`Hi NGB Interiors! I'm interested in the ${prod.name} (${prod.price}). Can you share more details?`);
 
+  // Close on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center p-0 lg:p-6"
-      style={{ backgroundColor:"rgba(0,0,0,0.65)", backdropFilter:"blur(6px)" }}
+    <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center p-0 lg:p-4"
+      style={{ backgroundColor:"rgba(0,0,0,0.75)", backdropFilter:"blur(8px)" }}
       onClick={onClose}>
-      <div className="relative bg-white w-full lg:max-w-3xl lg:rounded-2xl overflow-hidden flex flex-col lg:flex-row"
-        style={{ maxHeight:"92vh" }}
+      <div className="relative bg-white w-full lg:max-w-4xl lg:rounded-2xl overflow-hidden flex flex-col lg:flex-row shadow-2xl"
+        style={{ maxHeight:"95vh", animation: "slideUp 0.3s ease-out" }}
         onClick={e=>e.stopPropagation()}>
 
-        <div className="flex-none lg:w-5/12" style={{ aspectRatio:"4/3", minHeight:190, background:CHARCOAL, position:"relative" }}>
-          <img src={img(prod.pid,700,530)} alt={prod.name} className="w-full h-full object-cover" />
+        {/* Product Image */}
+        <div className="flex-none lg:w-1/2" style={{ aspectRatio:"4/3", minHeight:240, background:CHARCOAL, position:"relative" }}>
+          <img src={img(prod.pid,800,600)} alt={prod.name} className="w-full h-full object-cover" />
+          
+          {/* Favorite Button */}
           <button onClick={()=>onFav(prod.id)}
-            className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ backgroundColor:"rgba(255,255,255,0.9)", backdropFilter:"blur(4px)", border:"none", cursor:"pointer" }}>
-            <Heart size={17} fill={fav?"#e53e3e":"none"} stroke={fav?"#e53e3e":"#555"} />
+            className="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform touch-manipulation"
+            style={{ backgroundColor:"rgba(255,255,255,0.95)", backdropFilter:"blur(6px)", border:"none", cursor:"pointer" }}
+            aria-label="Toggle favorite">
+            <Heart size={18} fill={fav?"#e53e3e":"none"} stroke={fav?"#e53e3e":"#555"} strokeWidth={fav?2:1.5} />
           </button>
+          
+          {/* Badge */}
           <div className="absolute bottom-3 left-3">
-            <span style={{ fontFamily:SANS, fontSize:"0.54rem", letterSpacing:"0.14em", textTransform:"uppercase", color:"white", backgroundColor:"rgba(0,0,0,0.55)", padding:"3px 8px", borderRadius:20 }}>
+            <span style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.14em", textTransform:"uppercase", color:"white", backgroundColor:"rgba(0,0,0,0.7)", padding:"4px 10px", borderRadius:20, backdropFilter:"blur(4px)" }}>
               {showCustom ? "Custom Order" : "Product Details"}
             </span>
           </div>
@@ -1972,48 +1987,71 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
         {showCustom
           ? <CustomOrderPanel prod={prod} onBack={()=>setShowCustom(false)} onClose={onClose} />
           : (
-            <div className="flex flex-col flex-1 overflow-y-auto p-6">
-              <button onClick={onClose} className="self-end mb-3 hover:opacity-60 transition-opacity" style={{ color:CHARCOAL, background:"none", border:"none", cursor:"pointer" }}>
-                <X size={20} />
+            <div className="flex flex-col flex-1 overflow-y-auto">
+              {/* Close Button - Mobile Optimized */}
+              <button onClick={onClose} 
+                className="self-end m-3 sm:m-4 hover:opacity-60 active:scale-95 transition-all touch-manipulation w-10 h-10 rounded-full flex items-center justify-center" 
+                style={{ color:CHARCOAL, background:"rgba(0,0,0,0.05)", border:"none", cursor:"pointer" }}
+                aria-label="Close">
+                <X size={22} />
               </button>
 
-              <p style={{ fontFamily:SANS, fontSize:"0.55rem", letterSpacing:"0.24em", textTransform:"uppercase", color:GOLD, marginBottom:6, fontWeight:600 }}>NGB Interiors</p>
-              <h2 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.2rem,2.5vw,1.7rem)", fontWeight:700, color:CHARCOAL, marginBottom:4, lineHeight:1.2 }}>{prod.name}</h2>
-              <p style={{ fontFamily:SANS, fontSize:"1rem", fontWeight:700, color:GOLD, marginBottom:12 }}>{prod.price}</p>
-              <p style={{ fontFamily:BODY, fontSize:"0.83rem", fontWeight:300, lineHeight:1.75, color:MID, marginBottom:16 }}>{prod.desc}</p>
+              {/* Content */}
+              <div className="px-4 sm:px-6 pb-5 sm:pb-6">
+                <p style={{ fontFamily:SANS, fontSize:"0.55rem", letterSpacing:"0.24em", textTransform:"uppercase", color:GOLD, marginBottom:6, fontWeight:600 }}>NGB INTERIORS</p>
+                <h2 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.3rem,3vw,1.9rem)", fontWeight:700, color:CHARCOAL, marginBottom:6, lineHeight:1.2 }}>{prod.name}</h2>
+                <p style={{ fontFamily:SANS, fontSize:"1.1rem", fontWeight:700, color:GOLD, marginBottom:14 }}>{prod.price}</p>
+                <p style={{ fontFamily:BODY, fontSize:"0.9rem", fontWeight:300, lineHeight:1.8, color:MID, marginBottom:18 }}>{prod.desc}</p>
 
-              {mats.length > 0 && (
-                <div style={{ marginBottom:16 }}>
-                  <p style={{ fontFamily:SANS, fontSize:"0.58rem", letterSpacing:"0.14em", textTransform:"uppercase", color:CHARCOAL, fontWeight:600, marginBottom:8 }}>Materials &amp; Finish</p>
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
-                    {mats.map(m=>(
-                      <span key={m} style={{ padding:"4px 10px", borderRadius:20, backgroundColor:CREAM_D, fontFamily:BODY, fontSize:"0.71rem", color:CHARCOAL }}>{m}</span>
-                    ))}
-                  </div>
+                {/* Rating */}
+                <div className="flex items-center gap-1.5 mb-5">
+                  {[1,2,3,4,5].map(n=><Star key={n} size={14} fill={n<=Math.floor(prod.rating)?GOLD:"none"} stroke={n<=Math.floor(prod.rating)?GOLD:"#ccc"} strokeWidth={1.5} />)}
+                  <span style={{ fontFamily:BODY, fontSize:"0.8rem", color:MID, marginLeft:4 }}>{prod.rating} / 5</span>
                 </div>
-              )}
 
-              <div className="flex items-center gap-1 mb-6">
-                {[1,2,3,4,5].map(n=><Star key={n} size={13} fill={n<=Math.floor(prod.rating)?GOLD:"none"} stroke={n<=Math.floor(prod.rating)?GOLD:"#ccc"} />)}
-                <span style={{ fontFamily:BODY, fontSize:"0.74rem", color:MID, marginLeft:4 }}>{prod.rating} / 5</span>
-              </div>
+                {/* Materials */}
+                {mats.length > 0 && (
+                  <div style={{ marginBottom:20 }}>
+                    <p style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.14em", textTransform:"uppercase", color:CHARCOAL, fontWeight:600, marginBottom:10 }}>MATERIALS & FINISH</p>
+                    <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                      {mats.map(m=>(
+                        <span key={m} style={{ padding:"5px 12px", borderRadius:20, backgroundColor:CREAM_D, fontFamily:BODY, fontSize:"0.75rem", color:CHARCOAL }}>{m}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-              <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:"auto" }}>
-                <a href={`https://wa.me/256782042866?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2.5 py-3.5"
-                  style={{ fontFamily:SANS, fontSize:"0.7rem", letterSpacing:"0.1em", backgroundColor:"#25D366", color:"white", textDecoration:"none", borderRadius:6 }}>
-                  <PhoneCall size={15} /> Order via WhatsApp
-                </a>
-                <button onClick={()=>setShowCustom(true)}
-                  className="flex items-center justify-center gap-2.5 py-3"
-                  style={{ fontFamily:SANS, fontSize:"0.7rem", letterSpacing:"0.1em", color:CHARCOAL, border:`1.5px solid ${CHARCOAL}`, borderRadius:6, background:"none", cursor:"pointer" }}>
-                  ✏️ Request Custom Piece
-                </button>
+                {/* Action Buttons - Mobile Optimized */}
+                <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:"auto", paddingTop:10 }}>
+                  <a href={`https://wa.me/256782042866?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2.5 py-3.5 sm:py-4 active:scale-98 transition-transform touch-manipulation"
+                    style={{ fontFamily:SANS, fontSize:"0.75rem", letterSpacing:"0.1em", fontWeight:600, backgroundColor:"#25D366", color:"white", textDecoration:"none", borderRadius:8, boxShadow:"0 2px 8px rgba(37,211,102,0.3)" }}>
+                    <PhoneCall size={16} /> Order via WhatsApp
+                  </a>
+                  <button onClick={()=>setShowCustom(true)}
+                    className="flex items-center justify-center gap-2.5 py-3 sm:py-3.5 active:scale-98 transition-transform touch-manipulation"
+                    style={{ fontFamily:SANS, fontSize:"0.75rem", letterSpacing:"0.1em", fontWeight:600, color:CHARCOAL, border:`2px solid ${CHARCOAL}`, borderRadius:8, background:"white", cursor:"pointer" }}>
+                    ✏️ Request Custom Piece
+                  </button>
+                </div>
               </div>
             </div>
           )
         }
       </div>
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @media (min-width: 1024px) {
+          @keyframes slideUp {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+          }
+        }
+      `}</style>
     </div>
   );
 }
