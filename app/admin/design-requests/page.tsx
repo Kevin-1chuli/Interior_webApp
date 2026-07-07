@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { authenticatedFetch } from "@/lib/auth";
 import { getApiUrl } from "@/lib/config";
-import { Sparkles, Eye, Clock, MapPin, DollarSign } from "lucide-react";
+import { Sparkles, Eye, Clock, MapPin, DollarSign, Download } from "lucide-react";
+import * as XLSX from 'xlsx';
 
 interface DesignRequest {
   id: string;
@@ -64,6 +65,34 @@ export default function DesignRequestsPage() {
     }
   };
 
+  const exportToExcel = () => {
+    // Prepare data for export
+    const exportData = requests.map(req => ({
+      'Name': req.name,
+      'Email': req.email,
+      'Phone': req.phone || 'N/A',
+      'Project Type': req.projectType,
+      'Budget': req.budget || 'Not specified',
+      'Location': req.location || 'Not specified',
+      'Timeline': req.timeline || 'Not specified',
+      'Description': req.description,
+      'Status': req.status,
+      'Read': req.isRead ? 'Yes' : 'No',
+      'Date': new Date(req.createdAt).toLocaleString()
+    }));
+
+    // Create worksheet and workbook
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Design Requests');
+
+    // Generate file name with timestamp
+    const fileName = `design_requests_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Download file
+    XLSX.writeFile(wb, fileName);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -77,43 +106,55 @@ export default function DesignRequestsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6 lg:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Design Requests</h1>
-          <p className="text-gray-600 mt-2">View and manage interior design requests from customers</p>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Design Requests</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">View and manage interior design requests from customers</p>
+          </div>
+          {requests.length > 0 && (
+            <button
+              onClick={exportToExcel}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm active:scale-95 touch-manipulation"
+            >
+              <Download className="w-5 h-5" />
+              <span className="hidden sm:inline">Export Excel</span>
+              <span className="sm:hidden">Export</span>
+            </button>
+          )}
         </div>
 
         {requests.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="w-8 h-8 text-amber-600" />
+          <div className="bg-white rounded-xl border border-gray-200 p-8 sm:p-12 text-center">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-amber-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No design requests yet</h3>
-            <p className="text-gray-600">Customer design requests will appear here</p>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No design requests yet</h3>
+            <p className="text-sm sm:text-base text-gray-600">Customer design requests will appear here</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Requests List */}
             <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="p-4 border-b border-gray-200 bg-gray-50">
-                <h2 className="font-semibold text-gray-900">Requests ({requests.length})</h2>
+              <div className="p-3 sm:p-4 border-b border-gray-200 bg-gray-50">
+                <h2 className="font-semibold text-sm sm:text-base text-gray-900">Requests ({requests.length})</h2>
               </div>
-              <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+              <div className="divide-y divide-gray-200 max-h-[400px] sm:max-h-[600px] overflow-y-auto">
                 {requests.map((request) => (
                   <button
                     key={request.id}
                     onClick={() => handleViewRequest(request)}
-                    className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
+                    className={`w-full text-left p-3 sm:p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors ${
                       selectedRequest?.id === request.id ? 'bg-amber-50' : ''
                     } ${!request.isRead ? 'bg-blue-50' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="font-semibold text-gray-900 truncate">{request.name}</div>
+                      <div className="font-semibold text-sm sm:text-base text-gray-900 truncate">{request.name}</div>
                       {!request.isRead && (
                         <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-2"></span>
                       )}
                     </div>
-                    <div className="text-sm text-gray-600 truncate mb-1">{request.projectType}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 truncate mb-1">{request.projectType}</div>
                     <div className="text-xs text-gray-500 truncate">{request.location || 'No location'}</div>
                     <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
@@ -127,71 +168,71 @@ export default function DesignRequestsPage() {
             {/* Request Detail */}
             <div className="lg:col-span-2">
               {selectedRequest ? (
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">{selectedRequest.projectType}</h2>
+                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                  <div className="mb-4 sm:mb-6">
+                    <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">{selectedRequest.projectType}</h2>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Client</div>
-                        <div className="font-medium text-gray-900">{selectedRequest.name}</div>
+                        <div className="text-xs sm:text-sm text-gray-500 mb-1">Client</div>
+                        <div className="font-medium text-sm sm:text-base text-gray-900">{selectedRequest.name}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Email</div>
-                        <div className="font-medium text-gray-900">{selectedRequest.email}</div>
+                        <div className="text-xs sm:text-sm text-gray-500 mb-1">Email</div>
+                        <div className="font-medium text-sm sm:text-base text-gray-900 truncate">{selectedRequest.email}</div>
                       </div>
                       {selectedRequest.phone && (
                         <div>
-                          <div className="text-sm text-gray-500 mb-1">Phone</div>
-                          <div className="font-medium text-gray-900">{selectedRequest.phone}</div>
+                          <div className="text-xs sm:text-sm text-gray-500 mb-1">Phone</div>
+                          <div className="font-medium text-sm sm:text-base text-gray-900">{selectedRequest.phone}</div>
                         </div>
                       )}
                       {selectedRequest.location && (
                         <div>
-                          <div className="text-sm text-gray-500 mb-1">Location</div>
-                          <div className="font-medium text-gray-900 flex items-center gap-1">
-                            <MapPin className="w-4 h-4 text-gray-400" />
-                            {selectedRequest.location}
+                          <div className="text-xs sm:text-sm text-gray-500 mb-1">Location</div>
+                          <div className="font-medium text-sm sm:text-base text-gray-900 flex items-center gap-1">
+                            <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                            <span className="truncate">{selectedRequest.location}</span>
                           </div>
                         </div>
                       )}
                       {selectedRequest.budget && (
                         <div>
-                          <div className="text-sm text-gray-500 mb-1">Budget</div>
-                          <div className="font-medium text-gray-900 flex items-center gap-1">
-                            <DollarSign className="w-4 h-4 text-gray-400" />
+                          <div className="text-xs sm:text-sm text-gray-500 mb-1">Budget</div>
+                          <div className="font-medium text-sm sm:text-base text-gray-900 flex items-center gap-1">
+                            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
                             {selectedRequest.budget}
                           </div>
                         </div>
                       )}
                       {selectedRequest.timeline && (
                         <div>
-                          <div className="text-sm text-gray-500 mb-1">Timeline</div>
-                          <div className="font-medium text-gray-900">{selectedRequest.timeline}</div>
+                          <div className="text-xs sm:text-sm text-gray-500 mb-1">Timeline</div>
+                          <div className="font-medium text-sm sm:text-base text-gray-900">{selectedRequest.timeline}</div>
                         </div>
                       )}
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Submitted</div>
-                        <div className="font-medium text-gray-900">{new Date(selectedRequest.createdAt).toLocaleString()}</div>
+                        <div className="text-xs sm:text-sm text-gray-500 mb-1">Submitted</div>
+                        <div className="font-medium text-xs sm:text-sm text-gray-900">{new Date(selectedRequest.createdAt).toLocaleString()}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-500 mb-1">Status</div>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 capitalize">
+                        <div className="text-xs sm:text-sm text-gray-500 mb-1">Status</div>
+                        <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 capitalize">
                           {selectedRequest.status}
                         </span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="text-sm text-gray-500 mb-2">Project Description</div>
-                    <p className="text-gray-800 whitespace-pre-wrap">{selectedRequest.description}</p>
+                  <div className="border-t border-gray-200 pt-4 sm:pt-6">
+                    <div className="text-xs sm:text-sm text-gray-500 mb-2">Project Description</div>
+                    <p className="text-sm sm:text-base text-gray-800 whitespace-pre-wrap">{selectedRequest.description}</p>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                  <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Select a request to view details</p>
+                <div className="bg-white rounded-xl border border-gray-200 p-8 sm:p-12 text-center">
+                  <Sparkles className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm sm:text-base text-gray-600">Select a request to view details</p>
                 </div>
               )}
             </div>
