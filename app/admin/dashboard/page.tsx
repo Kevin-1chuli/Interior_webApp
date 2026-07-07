@@ -8,10 +8,10 @@ import { Sofa, Briefcase, Pencil, Mail, Plus, ArrowRight } from "lucide-react";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState([
-    { label: "Total Products", value: "...", icon: Sofa, href: "/admin/products", color: "amber" },
-    { label: "Projects", value: "...", icon: Briefcase, href: "/admin/projects", color: "amber" },
-    { label: "Design Requests", value: "...", icon: Pencil, href: "/admin/design-requests", color: "amber" },
-    { label: "Messages", value: "...", icon: Mail, href: "/admin/messages", color: "amber" },
+    { label: "Total Products", value: "...", icon: Sofa, href: "/admin/products", color: "amber", bgImage: null },
+    { label: "Projects", value: "...", icon: Briefcase, href: "/admin/projects", color: "amber", bgImage: null },
+    { label: "Design Requests", value: "...", icon: Pencil, href: "/admin/design-requests", color: "amber", bgImage: null },
+    { label: "Messages", value: "...", icon: Mail, href: "/admin/messages", color: "amber", bgImage: null },
   ]);
 
   useEffect(() => {
@@ -55,11 +55,15 @@ export default function AdminDashboard() {
         console.error('Failed to fetch messages/requests:', error);
       }
 
+      // Get background images from first product and project
+      const productBg = products[0]?.images?.[0] || null;
+      const projectBg = projects[0]?.afterImages?.[0] || null;
+
       setStats([
-        { label: "Total Products", value: products.length.toString(), icon: Sofa, href: "/admin/products", color: "amber" },
-        { label: "Projects", value: projects.length.toString(), icon: Briefcase, href: "/admin/projects", color: "amber" },
-        { label: "Design Requests", value: designRequestsCount.toString(), icon: Pencil, href: "/admin/design-requests", color: "amber" },
-        { label: "Messages", value: messagesCount.toString(), icon: Mail, href: "/admin/messages", color: "amber" },
+        { label: "Total Products", value: products.length.toString(), icon: Sofa, href: "/admin/products", color: "amber", bgImage: productBg },
+        { label: "Projects", value: projects.length.toString(), icon: Briefcase, href: "/admin/projects", color: "amber", bgImage: projectBg },
+        { label: "Design Requests", value: designRequestsCount.toString(), icon: Pencil, href: "/admin/design-requests", color: "amber", bgImage: null },
+        { label: "Messages", value: messagesCount.toString(), icon: Mail, href: "/admin/messages", color: "amber", bgImage: null },
       ]);
     } catch (error) {
       console.error('Failed to load stats:', error);
@@ -93,23 +97,38 @@ export default function AdminDashboard() {
               <Link
                 key={stat.label}
                 href={stat.href}
-                className="bg-white rounded-xl border p-3 sm:p-4 md:p-5 lg:p-6 hover:shadow-lg transition-all active:scale-95 touch-manipulation"
+                className="relative bg-white rounded-xl border p-3 sm:p-4 md:p-5 lg:p-6 hover:shadow-lg transition-all active:scale-95 touch-manipulation overflow-hidden"
                 style={{ borderColor: isActive ? "#b8934a" : "#ede9e2" }}
               >
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <div 
-                    className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center shadow-sm"
-                    style={{ backgroundColor: isActive ? "#b8934a" : "#ede9e2" }}
-                  >
-                    <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 md:w-6 md:h-6" style={{ color: isActive ? "white" : "#6b6560" }} />
+                {/* Background Image */}
+                {stat.bgImage && (
+                  <div className="absolute inset-0 opacity-10">
+                    <img 
+                      src={stat.bgImage} 
+                      alt="" 
+                      className="w-full h-full object-cover"
+                      style={{ filter: 'blur(2px)' }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent" />
                   </div>
+                )}
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <div 
+                      className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-xl flex items-center justify-center shadow-sm"
+                      style={{ backgroundColor: isActive ? "#b8934a" : "#ede9e2" }}
+                    >
+                      <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 md:w-6 md:h-6" style={{ color: isActive ? "white" : "#6b6560" }} />
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: "#6b6560", fontFamily: "'Montserrat', sans-serif" }}>
+                    {stat.label}
+                  </p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold" style={{ color: "#1e1e1e", fontFamily: "'Montserrat', sans-serif" }}>
+                    {stat.value}
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm font-medium mb-1" style={{ color: "#6b6560", fontFamily: "'Montserrat', sans-serif" }}>
-                  {stat.label}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold" style={{ color: "#1e1e1e", fontFamily: "'Montserrat', sans-serif" }}>
-                  {stat.value}
-                </p>
               </Link>
             );
           })}

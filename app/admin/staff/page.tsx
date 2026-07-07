@@ -21,6 +21,7 @@ export default function StaffPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState<string | null>(null);
   const [formData, setFormData] = useState({ username: "", password: "", email: "" });
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [resetPasswordData, setResetPasswordData] = useState({ newPassword: "", confirmPassword: "" });
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -188,15 +189,24 @@ export default function StaffPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Temporary Password *
                 </label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  placeholder="Staff will be required to change this on first login"
-                />
+                <div className="relative">
+                  <input
+                    type={showCreatePassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    placeholder="Staff will be required to change this on first login"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCreatePassword(!showCreatePassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showCreatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <p className="text-xs text-gray-500 mt-1">Staff will be forced to change this password on first login</p>
               </div>
               <div>
@@ -231,6 +241,7 @@ export default function StaffPage() {
                   onClick={() => {
                     setShowCreateForm(false);
                     setFormData({ username: "", password: "", email: "" });
+                    setShowCreatePassword(false);
                     setError("");
                   }}
                   className="px-6 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-all"
