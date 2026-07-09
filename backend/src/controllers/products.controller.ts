@@ -198,3 +198,144 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
+export const updateProduct = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      category,
+      categoryId,
+      price,
+      currency = 'UGX',
+      materials,
+      dimensions,
+      existingImages
+    } = req.body;
+
+    // Check if product exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { id }
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Parse materials if it's a JSON string
+    let materialsArray: string[] = [];
+    if (materials) {
+      try {
+        materialsArray = typeof materials === 'string' ? JSON.parse(materials) : materials;
+        if (!Array.isArray(materialsArray)) {
+          materialsArray = [];
+        }
+      } catch (e) {
+        console.error('Failed to parse materials:', e);
+        materialsArray = [];
+      }
+    }
+
+    // Parse existing images
+    let imageUrls: string[] = [];
+    if (existingImages) {
+      try {
+        imageUrls = typeof existingImages === 'string' ? JSON.parse(existingImages) : existingImages;
+        if (!Array.isArray(imageUrls)) {
+          imageUrls = [];
+        }
+      } catch (e) {
+        console.error('Failed to parse existing images:', e);
+        imageUrls = [];
+      }
+    }
+
+    // Handle new image uploads
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      try {
+        const uploadPromises = req.files.map((file: Express.Multer.File) =>
+          uploadToCloudinary(file.buffer, file.originalname)
+        );
+        const newImageUrls = await Promise.all(uploadPromises);
+        imageUrls = [...imageUrls, ...newImageUrls];
+      } catch (uploadError) {
+        console.error('Image upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to upload images to Cloudinary'
+        });
+      }
+    }
+
+    // Update product
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        name: name || existingProduct.name,
+        description: description !== undefined ? description : existingProduct.description,
+        category: category || existingProduct.category,
+        categoryId: categoryId !== undefined ? categoryId : existingProduct.categoryId,
+        price: price ? parseFloat(price) : existingProduct.price,
+        currency: currency || existingProduct.currency,
+        images: imageUrls.length > 0 ? imageUrls : (existingProduct.images as any),
+        materials: materialsArray.length > 0 ? materialsArray : (existingProduct.materials as any),
+        dimensions: dimensions !== undefined ? dimensions : existingProduct.dimensions
+      }
+    });
+
+    res.json({
+      success: true,
+      data: product,
+      message: 'Product updated successfully'
+    });
+  } catch (error: any) {
+    console.error('Update product error:', error);
+    
+    // Handle Prisma unique constraint errors
+    if (error.code === 'P2002') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'A product with this name already exists' 
+      });
+    }
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+};
+
+export const getProductById = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const product = await prisma.product.findUnique({
+      where: { id }
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: product
+    });
+  } catch (error: any) {
+    console.error('Get product error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
