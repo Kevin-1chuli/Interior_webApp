@@ -8,10 +8,10 @@ import { Sofa, Briefcase, Pencil, Mail, Plus, ArrowRight } from "lucide-react";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState([
-    { label: "Total Products", value: "...", icon: Sofa, href: "/admin/products", color: "amber", bgImage: null },
-    { label: "Projects", value: "...", icon: Briefcase, href: "/admin/projects", color: "amber", bgImage: null },
-    { label: "Design Requests", value: "...", icon: Pencil, href: "/admin/design-requests", color: "amber", bgImage: null },
-    { label: "Messages", value: "...", icon: Mail, href: "/admin/messages", color: "amber", bgImage: null },
+    { label: "Total Products", value: "...", icon: Sofa, href: "/admin/products", color: "amber", bgImage: null as string | null },
+    { label: "Projects", value: "...", icon: Briefcase, href: "/admin/projects", color: "amber", bgImage: null as string | null },
+    { label: "Design Requests", value: "...", icon: Pencil, href: "/admin/design-requests", color: "amber", bgImage: null as string | null },
+    { label: "Messages", value: "...", icon: Mail, href: "/admin/messages", color: "amber", bgImage: null as string | null },
   ]);
 
   useEffect(() => {
