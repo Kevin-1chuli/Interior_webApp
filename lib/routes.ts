@@ -1,5 +1,3 @@
-import { isCatId } from "./categories";
-
 /**
  * Convert navigation keys → URL paths
  */
@@ -10,8 +8,10 @@ export const routePathFor = (page: string) => {
   if (page === "projects") return "/projects";
   if (page === "contact") return "/contact";
 
-  // category route (furniture subpages)
-  if (isCatId(page)) return `/furniture/${page}`;
+  // category route (furniture subpages) - assume any other string is a category slug
+  // The actual validation happens at the page level
+  if (page.startsWith("/furniture/")) return page;
+  if (!page.startsWith("/")) return `/furniture/${page}`;
 
   return "/";
 };
@@ -36,8 +36,8 @@ export const activePageFromPath = (pathname: string) => {
 export const activeCategoryFromPath = (pathname: string) => {
   const parts = pathname.split("/").filter(Boolean);
 
-  if (parts[0] === "furniture" && parts[1] && isCatId(parts[1])) {
-    return parts[1]; // e.g. "beds", "sofas"
+  if (parts[0] === "furniture" && parts[1]) {
+    return parts[1]; // Return the slug - validation happens at page level
   }
 
   return null;

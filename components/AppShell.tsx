@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AppUIProvider, useAppUI } from "@/context/AppUIContext";
 import {
   Footer,
@@ -9,6 +10,8 @@ import {
   SearchOverlay,
   WishlistPanel,
 } from "@/components/NGBComponents";
+import { getCategories } from "@/lib/categories";
+import type { Category } from "@/lib/types";
 
 function AppShellContent({ children }: { children: React.ReactNode }) {
   const {
@@ -29,6 +32,20 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
     viewProd,
     wishlistOpen,
   } = useAppUI();
+
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const fetchedCategories = await getCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    }
+    loadCategories();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,6 +84,7 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
             navigate(page);
             closeSearch();
           }}
+          categories={categories}
         />
       )}
 
@@ -87,11 +105,11 @@ function AppShellContent({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      <HamburgerDrawer open={drawer} onClose={closeDrawer} onNav={navigate} />
+      <HamburgerDrawer open={drawer} onClose={closeDrawer} onNav={navigate} categories={categories} />
 
       <main style={{ paddingTop:68 }}>
         {children}
-        <Footer onNav={navigate} />
+        <Footer onNav={navigate} categories={categories} />
       </main>
     </div>
   );

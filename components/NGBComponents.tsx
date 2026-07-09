@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────────
-import type { CatId, Prod } from "@/lib/types";
+import type { CatId, Prod, Category } from "@/lib/types";
 import {
   BODY, CHARCOAL, CREAM, CREAM_D, DISPLAY, EASE_OUT,
   GOLD, GOLD_LIGHT, MID, SANS, WHITE,
@@ -20,7 +20,7 @@ import { img } from "@/lib/images";
 import { getAllProducts } from "@/lib/products";
 import { ApiProject } from "@/lib/api";
 import {
-  CATS, HERO_SLIDES, JOURNEY, MATERIALS, PRODS,
+  HERO_SLIDES, JOURNEY, MATERIALS, PRODS,
   SPACES, STATS, SVC_CARDS,
 } from "@/lib/data";
 import { JOURNEY_ICONS, STATS_ICONS } from "@/lib/icons";
@@ -249,11 +249,11 @@ export function SliderArrow({ dir, onClick, hidden }: { dir:"prev"|"next"; onCli
 
 // ─── CategorySlider — scroll-based, advances 2 cards per click ───────────────
 // FIX 4: "See all" button navigates to /furniture/${catId}
-export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, products: allProducts }: {
-  catId:CatId; bg?:string; fav:Set<number>; onFav:(id:number)=>void; onNavigate:(p:string)=>void; onView:(p:Prod)=>void; products?:Record<CatId, Prod[]>;
+export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, products: allProducts, categoryName }: {
+  catId:CatId; bg?:string; fav:Set<number>; onFav:(id:number)=>void; onNavigate:(p:string)=>void; onView:(p:Prod)=>void; products?:Record<CatId, Prod[]>; categoryName?:string;
 }) {
-  const cat = CATS.find(c=>c.id===catId)!;
-  const products = allProducts ? allProducts[catId] : PRODS[catId];
+  const name = categoryName || catId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const products = allProducts ? allProducts[catId] : PRODS[catId] || [];
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
@@ -285,7 +285,7 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, prod
         <div className="flex items-center justify-between mb-2">
           <div>
             <p style={{ fontFamily:SANS, fontSize:"0.5rem", letterSpacing:"0.22em", textTransform:"uppercase", color:GOLD, marginBottom:3, fontWeight:600 }}>Collection</p>
-            <h2 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.1rem,2vw,1.5rem)", fontWeight:600, color:CHARCOAL, lineHeight:1.15 }}>{cat.name}</h2>
+            <h2 style={{ fontFamily:DISPLAY, fontSize:"clamp(1.1rem,2vw,1.5rem)", fontWeight:600, color:CHARCOAL, lineHeight:1.15 }}>{name}</h2>
           </div>
           <button
             onClick={()=>onNavigate(catId)}
@@ -324,7 +324,7 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, prod
               </div>
             ))}
             <div style={{ flex:"0 0 calc(25% - 12px)" }}>
-              <SeeAllCard catId={catId} name={cat.name} onNavigate={onNavigate} />
+              <SeeAllCard catId={catId} name={name} onNavigate={onNavigate} />
             </div>
           </div>
 
@@ -342,7 +342,7 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, prod
             </div>
           ))}
           <div className="flex-none" style={{ width:"calc(50% - 8px)", scrollSnapAlign:"start" }}>
-            <SeeAllCard catId={catId} name={cat.name} onNavigate={onNavigate} />
+            <SeeAllCard catId={catId} name={name} onNavigate={onNavigate} />
           </div>
         </div>
 
@@ -384,16 +384,17 @@ export function ServiceCard({ title, sub, pid, nav, onNavigate }: { title:string
 }
 
 // ─── Compact category card for the right column ───────────────────────────────
-// FIX 8: navigate to /furniture/${cat.id}
-export function CollectionMiniCard({ cat, onNavigate }: { cat:typeof CATS[0]; onNavigate:(p:string)=>void }) {
+// FIX 8: navigate to /furniture/${cat.slug}
+export function CollectionMiniCard({ cat, onNavigate }: { cat:Category; onNavigate:(p:string)=>void }) {
   const [h,setH] = useState(false);
+  const imageUrl = cat.imageUrl || '1696762932825-2737db830bbe';
   return (
-    <button onClick={()=>onNavigate(`/furniture/${cat.id}`)} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
+    <button onClick={()=>onNavigate(`/furniture/${cat.slug}`)} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}
       className="relative overflow-hidden w-full text-left"
       style={{ height:72, borderRadius:8, background:CHARCOAL, border:"none", cursor:"pointer",
         boxShadow:h?"0 4px 16px rgba(0,0,0,0.18)":"0 1px 6px rgba(0,0,0,0.08)",
         transform:h?"translateY(-2px)":"translateY(0)", transition:`all 0.24s ${EASE_OUT}` }}>
-      <img src={img(cat.pid,300,144)} alt={cat.name} className="absolute inset-0 w-full h-full object-cover"
+      <img src={img(imageUrl,300,144)} alt={cat.name} className="absolute inset-0 w-full h-full object-cover"
         style={{ opacity:h?0.52:0.68, transform:h?"scale(1.06)":"scale(1)", transition:`all 0.5s ${EASE_OUT}` }} />
       <div className="absolute inset-0" style={{ background:"linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 70%)" }} />
       <div className="absolute bottom-0 left-0 right-0 px-2.5 pb-2 flex items-end justify-between">
@@ -815,10 +816,12 @@ export function HamburgerDrawer({
   open,
   onClose,
   onNav,
+  categories,
 }: {
   open: boolean;
   onClose: () => void;
   onNav: (p: string) => void;
+  categories?: Category[];
 }) {
   const items = [
     { id: "home",            label: "Home"            },
@@ -826,8 +829,8 @@ export function HamburgerDrawer({
     { id: "interior-design", label: "Interior Design" },
     { id: "projects",        label: "Projects"        },
     { id: "contact",         label: "Contact Us"      },
-    ...CATS.map((c) => ({
-      id: c.id,
+    ...(categories || []).map((c) => ({
+      id: `/furniture/${c.slug}`,
       label: c.name,
     })),
   ];
@@ -1031,8 +1034,8 @@ export function Hero({ onShop, onDesign }: { onShop:()=>void; onDesign:()=>void 
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
-// FIX 6: Collections links now navigate to /furniture/${c.id}
-export function Footer({ onNav }: { onNav:(p:string)=>void }) {
+// FIX 6: Collections links now navigate to /furniture/${c.slug}
+export function Footer({ onNav, categories }: { onNav:(p:string)=>void; categories?: Category[] }) {
   return (
     <footer style={{ backgroundColor:"#0d0d0d" }}>
       <div className="max-w-6xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)", paddingTop:48, paddingBottom:32 }}>
@@ -1051,8 +1054,8 @@ export function Footer({ onNav }: { onNav:(p:string)=>void }) {
           </div>
           <div>
             <p style={{ fontFamily:SANS, fontSize:"0.58rem", letterSpacing:"0.2em", textTransform:"uppercase", color:GOLD_LIGHT, marginBottom:12 }}>Collections</p>
-            {CATS.map(c=>(
-              <p key={c.id} onClick={()=>onNav(`/furniture/${c.id}`)} style={{ fontFamily:BODY, fontSize:"0.8rem", fontWeight:300, color:"rgba(255,255,255,0.42)", marginBottom:8, cursor:"pointer" }}>{c.name}</p>
+            {(categories || []).map(c=>(
+              <p key={c.slug} onClick={()=>onNav(`/furniture/${c.slug}`)} style={{ fontFamily:BODY, fontSize:"0.8rem", fontWeight:300, color:"rgba(255,255,255,0.42)", marginBottom:8, cursor:"pointer" }}>{c.name}</p>
             ))}
           </div>
         </div>
@@ -1072,26 +1075,21 @@ export function Footer({ onNav }: { onNav:(p:string)=>void }) {
 // ─── Category Page ────────────────────────────────────────────────────────────
 export function CategoryPage({
   catId,
+  category,
   fav,
   onFav,
   onView,
   products: allProducts,
 }: {
   catId: CatId;
+  category?: Category;
   fav: Set<number>;
   onFav: (id: number) => void;
   onView: (p: Prod) => void;
   products?: Record<CatId, Prod[]>;
 }) {
-  const cat = CATS.find((c) => c.id === catId);
-
-  if (!cat) {
-    return (
-      <div style={{ padding: 40 }}>
-        <h2>Category not found</h2>
-      </div>
-    );
-  }
+  const name = category?.name || catId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const imageUrl = category?.imageUrl || '1696762932825-2737db830bbe';
 
   const products = allProducts ? allProducts[catId] || [] : PRODS[catId] || [];
   const [sort, setSort] = useState("featured");
@@ -1112,8 +1110,8 @@ export function CategoryPage({
         style={{ height: 180, background: CHARCOAL }}
       >
         <img
-          src={img(cat.pid, 1600, 500)}
-          alt={cat.name}
+          src={img(imageUrl, 1600, 500)}
+          alt={name}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ opacity: 0.38 }}
         />
@@ -1133,7 +1131,7 @@ export function CategoryPage({
               color: "white",
             }}
           >
-            {cat.name}
+            {name}
           </h1>
           <p
             style={{
@@ -1195,12 +1193,14 @@ export function FurniturePage({
   onNavigate,
   onView,
   products,
+  categories,
 }: {
   fav: Set<number>;
   onFav: (id: number) => void;
   onNavigate: (p: string) => void;
   onView: (p: Prod) => void;
   products: Record<CatId, Prod[]>;
+  categories: Category[];
 }) {
   return (
     <div>
@@ -1215,10 +1215,10 @@ export function FurniturePage({
         style={{ backgroundColor: WHITE }}
       >
         <div className="max-w-6xl mx-auto flex gap-2 overflow-x-auto py-3">
-          {CATS.map((cat) => (
+          {categories.map((cat) => (
             <a
-              key={cat.id}
-              href={`#cat-${cat.id}`}
+              key={cat.slug}
+              href={`#cat-${cat.slug}`}
               style={{
                 fontFamily: SANS,
                 padding: "8px 12px",
@@ -1227,30 +1227,25 @@ export function FurniturePage({
                 color: MID,
               }}
             >
-              {cat.label}
+              {cat.name}
             </a>
           ))}
         </div>
       </div>
 
-      <div id="cat-beds">
-        <CategorySlider catId="beds" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
-      </div>
-      <div id="cat-sofas">
-        <CategorySlider catId="sofas" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
-      </div>
-      <div id="cat-wardrobes">
-        <CategorySlider catId="wardrobes" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
-      </div>
-      <div id="cat-tv-units">
-        <CategorySlider catId="tv-units" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
-      </div>
-      <div id="cat-dining">
-        <CategorySlider catId="dining" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
-      </div>
-      <div id="cat-coffee-tables">
-        <CategorySlider catId="coffee-tables" fav={fav} onFav={onFav} onNavigate={onNavigate} onView={onView} products={products} />
-      </div>
+      {categories.map((cat) => (
+        <div key={cat.slug} id={`cat-${cat.slug}`}>
+          <CategorySlider 
+            catId={cat.slug} 
+            categoryName={cat.name}
+            fav={fav} 
+            onFav={onFav} 
+            onNavigate={onNavigate} 
+            onView={onView} 
+            products={products} 
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -2237,27 +2232,9 @@ export function ProductModal({ prod, onClose, fav, onFav }: { prod:Prod; onClose
 }
 
 // ─── Search Overlay ───────────────────────────────────────────────────────────
-const CAT_ALIASES: Record<string, CatId> = {
-  bed:"beds", beds:"beds",
-  sofa:"sofas", sofas:"sofas", couch:"sofas", lounge:"sofas",
-  wardrobe:"wardrobes", wardrobes:"wardrobes", closet:"wardrobes", cabinet:"wardrobes",
-  tv:"tv-units", "tv unit":"tv-units", "tv units":"tv-units", media:"tv-units", entertainment:"tv-units",
-  dining:"dining", "dining table":"dining", "dining tables":"dining", table:"dining",
-  coffee:"coffee-tables", "coffee table":"coffee-tables", "coffee tables":"coffee-tables",
-};
-
-function resolveCategory(q: string): CatId | null {
-  const t = q.trim().toLowerCase();
-  if (CAT_ALIASES[t]) return CAT_ALIASES[t];
-  for (const [key, id] of Object.entries(CAT_ALIASES)) {
-    if (t.includes(key) || key.includes(t)) return id;
-  }
-  return null;
-}
-
 // FIX 7: category navigation in search uses /furniture/${matchedCat}
-export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
-  onClose:()=>void; fav:Set<number>; onFav:(id:number)=>void; onView:(p:Prod)=>void; onNavigate:(p:string)=>void;
+export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate, categories }: {
+  onClose:()=>void; fav:Set<number>; onFav:(id:number)=>void; onView:(p:Prod)=>void; onNavigate:(p:string)=>void; categories?: Category[];
 }) {
   const [query, setQuery] = useState("");
   const all = getAllProducts();
@@ -2268,7 +2245,39 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
     p.catId.replace("-"," ").includes(q)
   );
 
+  // Dynamic category resolution
+  const resolveCategory = (searchQuery: string): string | null => {
+    if (!categories || categories.length === 0) return null;
+    
+    const query = searchQuery.toLowerCase().trim();
+    
+    // Try exact slug match first
+    const exactMatch = categories.find(cat => cat.slug.toLowerCase() === query);
+    if (exactMatch) return exactMatch.slug;
+    
+    // Try exact name match
+    const nameMatch = categories.find(cat => cat.name.toLowerCase() === query);
+    if (nameMatch) return nameMatch.slug;
+    
+    // Try partial name match
+    const partialMatch = categories.find(cat => 
+      cat.name.toLowerCase().includes(query) || 
+      query.includes(cat.name.toLowerCase())
+    );
+    if (partialMatch) return partialMatch.slug;
+    
+    // Try matching against slug parts (e.g., "tv" matches "tv-units")
+    const slugPartMatch = categories.find(cat => {
+      const slugParts = cat.slug.split('-');
+      return slugParts.some(part => part.toLowerCase() === query || query.includes(part.toLowerCase()));
+    });
+    if (slugPartMatch) return slugPartMatch.slug;
+    
+    return null;
+  };
+
   const matchedCat = q.length >= 2 ? resolveCategory(q) : null;
+  const matchedCatName = matchedCat && categories ? categories.find(c => c.slug === matchedCat)?.name : null;
 
   const handleEnter = () => {
     if (!q) return;
@@ -2303,17 +2312,17 @@ export function SearchOverlay({ onClose, fav, onFav, onView, onNavigate }: {
             value={query}
             onChange={e=>setQuery(e.target.value)}
             onKeyDown={e=>{ if(e.key==="Enter") handleEnter(); }}
-            placeholder='Try "beds", "sofa", "wardrobe", or a product name...'
+            placeholder='Search for furniture or category...'
             style={{ flex:1, fontFamily:BODY, fontSize:"1rem", color:CHARCOAL, border:"none", outline:"none", background:"transparent" }}
           />
           <button onClick={onClose} style={{ color:MID, background:"none", border:"none", cursor:"pointer" }}><X size={20} /></button>
         </div>
 
-        {matchedCat && (
+        {matchedCat && matchedCatName && (
           <div className="max-w-3xl mx-auto px-5 pb-3 flex items-center gap-2">
             <span style={{ fontFamily:SANS, fontSize:"0.62rem", color:MID }}>Press</span>
             <kbd style={{ fontFamily:SANS, fontSize:"0.58rem", padding:"2px 7px", borderRadius:4, backgroundColor:CREAM_D, border:`1px solid ${CREAM_D}`, color:CHARCOAL, fontWeight:600 }}>Enter</kbd>
-            <span style={{ fontFamily:SANS, fontSize:"0.62rem", color:MID }}>to browse all <strong style={{ color:GOLD }}>{CATS.find(c=>c.id===matchedCat)?.name}</strong></span>
+            <span style={{ fontFamily:SANS, fontSize:"0.62rem", color:MID }}>to browse all <strong style={{ color:GOLD }}>{matchedCatName}</strong></span>
           </div>
         )}
       </div>

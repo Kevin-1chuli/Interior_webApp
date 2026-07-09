@@ -24,20 +24,40 @@ function getConnectionUrl(): string {
   return url;
 }
 
-// Prisma client singleton - standard Prisma v5 initialization
-// No custom overrides, no lifecycle hooks, no method wrapping
-const prisma = global.prisma || new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  datasources: {
-    db: {
-      url: getConnectionUrl(),
+// Create Prisma client with proper configuration
+function createPrismaClient() {
+  const client = new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: getConnectionUrl(),
+      },
     },
-  },
-});
+  });
+
+  // Handle connection errors gracefully
+  client.$connect()
+    .then(() => {
+      console.log('✓ Prisma connected to database successfully');
+    })
+    .catch((error) => {
+      console.error('✗ Prisma connection error:', error);
+    });
+
+  return client;
+}
+
+// Prisma client singleton
+const prisma = global.prisma || createPrismaClient();
 
 // Store singleton in global for development hot-reload
 if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;
 }
+
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
 
 export default prisma;

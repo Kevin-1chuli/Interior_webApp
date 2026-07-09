@@ -1,5 +1,6 @@
 import type { CatId, Prod } from "./types";
 import { fetchProducts, ApiProduct } from "./api";
+import { getCategories } from "./categories";
 
 // Transform API product to frontend Prod format
 function transformProduct(apiProduct: ApiProduct, index: number): Prod {
@@ -13,17 +14,17 @@ function transformProduct(apiProduct: ApiProduct, index: number): Prod {
   };
 }
 
-// Group products by category
-function groupByCategory(products: ApiProduct[]): Record<CatId, Prod[]> {
-  const grouped: Record<CatId, Prod[]> = {
-    beds: [],
-    sofas: [],
-    wardrobes: [],
-    'tv-units': [],
-    dining: [],
-    'coffee-tables': []
-  };
+// Group products by category dynamically
+async function groupByCategory(products: ApiProduct[]): Promise<Record<CatId, Prod[]>> {
+  const categories = await getCategories();
+  
+  // Initialize empty arrays for each category
+  const grouped: Record<CatId, Prod[]> = {};
+  categories.forEach(cat => {
+    grouped[cat.slug] = [];
+  });
 
+  // Group products by their category
   products.forEach((product, index) => {
     const catId = product.category as CatId;
     if (grouped[catId]) {
@@ -34,7 +35,7 @@ function groupByCategory(products: ApiProduct[]): Record<CatId, Prod[]> {
   return grouped;
 }
 
-// Cache for products - disabled to always show fresh data
+// Cache for products
 let cachedProducts: Record<CatId, Prod[]> | null = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 0; // Disabled - always fetch fresh data
@@ -49,35 +50,26 @@ export async function getProducts(): Promise<Record<CatId, Prod[]>> {
 
   try {
     const apiProducts = await fetchProducts();
-    // Always use API data, even if empty - shows real database state
-    cachedProducts = groupByCategory(apiProducts);
+    cachedProducts = await groupByCategory(apiProducts);
     lastFetchTime = now;
     return cachedProducts;
   } catch (error) {
     console.error('Failed to fetch products from API:', error);
-    // Return empty categories instead of static fallback
-    return {
-      beds: [],
-      sofas: [],
-      wardrobes: [],
-      'tv-units': [],
-      dining: [],
-      'coffee-tables': []
-    };
+    
+    // Return empty object grouped by categories
+    const categories = await getCategories();
+    const empty: Record<CatId, Prod[]> = {};
+    categories.forEach(cat => {
+      empty[cat.slug] = [];
+    });
+    return empty;
   }
 }
 
 export function getAllProducts(): (Prod & { catId: CatId })[] {
   // Use cached data or empty array
-  const products = cachedProducts || {
-    beds: [],
-    sofas: [],
-    wardrobes: [],
-    'tv-units': [],
-    dining: [],
-    'coffee-tables': []
-  };
-  return (Object.keys(products) as CatId[]).flatMap((catId) =>
+  const products = cachedProducts || {};
+  return Object.keys(products).flatMap((catId) =>
     products[catId].map((product) => ({ ...product, catId })),
   );
 }

@@ -8,27 +8,31 @@ import {
 } from "@/components/NGBComponents";
 import { useAppUI } from "@/context/AppUIContext";
 import { getProducts } from "@/lib/products";
-import type { CatId, Prod } from "@/lib/types";
+import { getCategories } from "@/lib/categories";
+import type { CatId, Prod, Category } from "@/lib/types";
 
 export default function FurnitureContent() {
   const { fav, navigate, setViewProd, toggleFav } = useAppUI();
-  const [products, setProducts] = useState<Record<CatId, Prod[]>>({
-    beds: [],
-    sofas: [],
-    wardrobes: [],
-    'tv-units': [],
-    dining: [],
-    'coffee-tables': []
-  });
+  const [products, setProducts] = useState<Record<CatId, Prod[]>>({});
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadProducts() {
-      const fetchedProducts = await getProducts();
-      setProducts(fetchedProducts);
-      setIsLoading(false);
+    async function loadData() {
+      try {
+        const [fetchedProducts, fetchedCategories] = await Promise.all([
+          getProducts(),
+          getCategories()
+        ]);
+        setProducts(fetchedProducts);
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to load furniture data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    loadProducts();
+    loadData();
   }, []);
 
   if (isLoading) {
@@ -47,6 +51,7 @@ export default function FurnitureContent() {
         onNavigate={navigate} 
         onView={setViewProd}
         products={products}
+        categories={categories}
       />
       <StatsStrip />
       <ContactSection />

@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
 import CategoryContent from "@/components/pages/CategoryContent";
-import { CATS } from "@/lib/data";
-import type { CatId } from "@/lib/types";
+import { getCategories, isValidCategorySlug } from "@/lib/categories";
 
-const isCatId = (value: string): value is CatId =>
-  CATS.some((cat) => cat.id === value);
-
-export function generateStaticParams() {
-  return CATS.map((cat) => ({ catId: cat.id }));
+export async function generateStaticParams() {
+  try {
+    const categories = await getCategories();
+    return categories.map((cat) => ({ catId: cat.slug }));
+  } catch (error) {
+    console.error('Failed to generate category params:', error);
+    return [];
+  }
 }
 
 export default async function CategoryPage({
@@ -17,7 +19,10 @@ export default async function CategoryPage({
 }) {
   const { catId } = await params;
 
-  if (!isCatId(catId)) {
+  // Validate category exists
+  const isValid = await isValidCategorySlug(catId);
+  
+  if (!isValid) {
     notFound();
   }
 
