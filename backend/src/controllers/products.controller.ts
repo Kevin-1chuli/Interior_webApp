@@ -3,13 +3,41 @@ import prisma from '../prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import cloudinary from '../config/cloudinary';
 
+// Sanitize filename for Cloudinary public_id
+const sanitizeFilename = (filename: string): string => {
+  // Remove file extension
+  const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
+  
+  // Replace invalid characters with underscore
+  // Keep only: A-Z, a-z, 0-9, underscore, hyphen
+  let sanitized = nameWithoutExt.replace(/[^A-Za-z0-9_-]/g, '_');
+  
+  // Collapse consecutive underscores into single underscore
+  sanitized = sanitized.replace(/_+/g, '_');
+  
+  // Trim leading and trailing underscores
+  sanitized = sanitized.replace(/^_+|_+$/g, '');
+  
+  // If empty after sanitization, return empty string (caller will handle)
+  return sanitized;
+};
+
 // Helper function to upload image to Cloudinary
 const uploadToCloudinary = (buffer: Buffer, filename: string): Promise<string> => {
   return new Promise((resolve, reject) => {
+    const timestamp = Date.now();
+    const sanitizedName = sanitizeFilename(filename);
+    
+    // Format: product_<timestamp>_<sanitized-name>
+    // If sanitized name is empty, use just product_<timestamp>
+    const publicId = sanitizedName 
+      ? `product_${timestamp}_${sanitizedName}`
+      : `product_${timestamp}`;
+    
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: 'ngb-products',
-        public_id: `product_${Date.now()}_${filename}`,
+        public_id: publicId,
         resource_type: 'image',
       },
       (error, result) => {
