@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   User as UserIcon,
-  Download
+  Download,
+  FolderTree
 } from "lucide-react";
 import { getUser, clearAuth, isOwner as checkIsOwner } from "@/lib/auth";
 import { useAdminExport } from "@/context/AdminExportContext";
@@ -56,6 +57,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Products", href: "/admin/products", icon: Package },
     { label: "Projects", href: "/admin/projects", icon: Briefcase },
+    { label: "Categories", href: "/admin/categories", icon: FolderTree },
     { label: "Messages", href: "/admin/messages", icon: Mail },
     { label: "Staff", href: "/admin/staff", icon: Users, ownerOnly: true },
   ];
