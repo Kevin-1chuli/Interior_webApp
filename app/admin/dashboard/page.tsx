@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       let designRequestsCount = 0;
 
       try {
-        const token = localStorage.getItem('ngb_admin_token');
+        const token = localStorage.getItem('admin_token');
         if (token) {
           const [messagesRes, designRequestsRes] = await Promise.all([
             fetch(getApiUrl('contact/messages'), {

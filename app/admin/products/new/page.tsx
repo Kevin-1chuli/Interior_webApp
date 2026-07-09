@@ -89,7 +89,7 @@ export default function NewProductPage() {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("ngb_admin_token");
+      const token = localStorage.getItem("admin_token");
       if (!token) {
         alert("Please login first");
         router.push("/admin/login");

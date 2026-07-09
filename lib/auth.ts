@@ -15,8 +15,8 @@ export interface AuthResponse {
   message?: string;
 }
 
-const TOKEN_KEY = 'ngb_admin_token';
-const USER_KEY = 'ngb_admin_user';
+const TOKEN_KEY = 'admin_token';
+const USER_KEY = 'admin_user';
 
 /**
  * Securely store authentication token and user data
