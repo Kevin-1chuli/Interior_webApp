@@ -6,11 +6,42 @@ import { useRouter } from "next/navigation";
 import { fetchProjects } from "@/lib/api";
 import { authenticatedFetch } from "@/lib/auth";
 import { getApiUrl } from "@/lib/config";
+import * as XLSX from 'xlsx';
+import { useAdminExport } from "@/context/AdminExportContext";
 
 export default function ProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { registerExport, unregisterExport } = useAdminExport();
+
+  const exportToExcel = () => {
+    if (projects.length === 0) {
+      alert('No projects to export');
+      return;
+    }
+
+    const exportData = projects.map(project => ({
+      'Title': project.title,
+      'Description': project.description || 'N/A',
+      'Category': project.category,
+      'Location': project.location || 'N/A',
+      'Before Images': project.beforeImages?.join(', ') || 'No images',
+      'After Images': project.afterImages?.join(', ') || 'No images',
+      'Date Added': new Date(project.createdAt).toLocaleString()
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Projects');
+    const fileName = `projects_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
+  useEffect(() => {
+    registerExport(exportToExcel, 'Export Projects');
+    return () => unregisterExport();
+  }, [projects, registerExport, unregisterExport]);
 
   useEffect(() => {
     loadProjects();

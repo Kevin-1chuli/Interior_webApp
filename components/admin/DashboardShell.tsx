@@ -12,9 +12,11 @@ import {
   LogOut,
   Menu,
   X,
-  User as UserIcon
+  User as UserIcon,
+  Download
 } from "lucide-react";
 import { getUser, clearAuth, isOwner as checkIsOwner } from "@/lib/auth";
+import { useAdminExport } from "@/context/AdminExportContext";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -33,6 +35,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isOwner = checkIsOwner();
+  const { exportFunction, exportLabel } = useAdminExport();
 
   useEffect(() => {
     // Update user state if it changes
@@ -75,15 +78,25 @@ export default function DashboardShell({ children }: DashboardShellProps) {
             NGB Admin
           </h1>
         </div>
-        {user && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {exportFunction && (
+            <button
+              onClick={exportFunction}
+              className="p-2.5 hover:bg-green-50 rounded-xl transition-colors active:scale-95 touch-manipulation"
+              aria-label={exportLabel || "Export"}
+              title={exportLabel || "Export"}
+            >
+              <Download className="w-5 h-5 text-green-600" />
+            </button>
+          )}
+          {user && (
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
               <span className="text-sm font-bold text-white">
                 {user.username.charAt(0).toUpperCase()}
               </span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       {/* Mobile Backdrop */}
@@ -104,19 +117,32 @@ export default function DashboardShell({ children }: DashboardShellProps) {
         `}
       >
         <div className="h-full flex flex-col">
-          {/* Logo */}
+          {/* Logo + Desktop Export */}
           <div className="h-14 lg:h-16 flex items-center justify-between px-5 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white">
             <div>
               <h1 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-amber-600 to-amber-800 bg-clip-text text-transparent">NGB</h1>
               <p className="text-xs text-gray-600">Interior Concepts</p>
             </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors active:scale-95 touch-manipulation"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
+            <div className="flex items-center gap-2">
+              {exportFunction && (
+                <button
+                  onClick={exportFunction}
+                  className="hidden lg:flex items-center gap-2 px-3 py-2 hover:bg-green-50 rounded-lg transition-colors active:scale-95"
+                  aria-label={exportLabel || "Export"}
+                  title={exportLabel || "Export"}
+                >
+                  <Download className="w-4 h-4 text-green-600" />
+                  <span className="text-xs font-medium text-green-600">Export</span>
+                </button>
+              )}
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors active:scale-95 touch-manipulation"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
           </div>
 
           {/* Navigation */}

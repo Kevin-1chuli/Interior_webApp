@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { authenticatedFetch } from "@/lib/auth";
 import { getApiUrl } from "@/lib/config";
-import { Sparkles, Eye, Clock, MapPin, DollarSign, Download } from "lucide-react";
+import { Sparkles, Eye, Clock, MapPin, DollarSign } from "lucide-react";
 import * as XLSX from 'xlsx';
+import { useAdminExport } from "@/context/AdminExportContext";
 
 interface DesignRequest {
   id: string;
@@ -25,6 +26,45 @@ export default function DesignRequestsPage() {
   const [requests, setRequests] = useState<DesignRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<DesignRequest | null>(null);
+  const { registerExport, unregisterExport } = useAdminExport();
+
+  const exportToExcel = () => {
+    if (requests.length === 0) {
+      alert('No design requests to export');
+      return;
+    }
+
+    // Prepare data for export
+    const exportData = requests.map(req => ({
+      'Name': req.name,
+      'Email': req.email,
+      'Phone': req.phone || 'N/A',
+      'Project Type': req.projectType,
+      'Budget': req.budget || 'Not specified',
+      'Location': req.location || 'Not specified',
+      'Timeline': req.timeline || 'Not specified',
+      'Description': req.description,
+      'Status': req.status,
+      'Read': req.isRead ? 'Yes' : 'No',
+      'Date': new Date(req.createdAt).toLocaleString()
+    }));
+
+    // Create worksheet and workbook
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Design Requests');
+
+    // Generate file name with timestamp
+    const fileName = `design_requests_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Download file
+    XLSX.writeFile(wb, fileName);
+  };
+
+  useEffect(() => {
+    registerExport(exportToExcel, 'Export Design Requests');
+    return () => unregisterExport();
+  }, [requests, registerExport, unregisterExport]);
 
   useEffect(() => {
     fetchRequests();
@@ -65,34 +105,6 @@ export default function DesignRequestsPage() {
     }
   };
 
-  const exportToExcel = () => {
-    // Prepare data for export
-    const exportData = requests.map(req => ({
-      'Name': req.name,
-      'Email': req.email,
-      'Phone': req.phone || 'N/A',
-      'Project Type': req.projectType,
-      'Budget': req.budget || 'Not specified',
-      'Location': req.location || 'Not specified',
-      'Timeline': req.timeline || 'Not specified',
-      'Description': req.description,
-      'Status': req.status,
-      'Read': req.isRead ? 'Yes' : 'No',
-      'Date': new Date(req.createdAt).toLocaleString()
-    }));
-
-    // Create worksheet and workbook
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Design Requests');
-
-    // Generate file name with timestamp
-    const fileName = `design_requests_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-    // Download file
-    XLSX.writeFile(wb, fileName);
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -107,21 +119,9 @@ export default function DesignRequestsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Design Requests</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">View and manage interior design requests from customers</p>
-          </div>
-          {requests.length > 0 && (
-            <button
-              onClick={exportToExcel}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm active:scale-95 touch-manipulation"
-            >
-              <Download className="w-5 h-5" />
-              <span className="hidden sm:inline">Export Excel</span>
-              <span className="sm:hidden">Export</span>
-            </button>
-          )}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Design Requests</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">View and manage interior design requests from customers</p>
         </div>
 
         {requests.length === 0 ? (

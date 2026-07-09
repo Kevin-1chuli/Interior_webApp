@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import DashboardShell from "@/components/admin/DashboardShell";
 import ProtectedRoute from "@/components/admin/ProtectedRoute";
+import { AdminExportProvider } from "@/context/AdminExportContext";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,7 +19,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Protected routes with dashboard shell
   return (
     <ProtectedRoute>
-      <DashboardShell>{children}</DashboardShell>
+      <AdminExportProvider>
+        <DashboardShell>{children}</DashboardShell>
+      </AdminExportProvider>
     </ProtectedRoute>
   );
 }

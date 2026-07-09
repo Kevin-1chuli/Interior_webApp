@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { authenticatedFetch } from "@/lib/auth";
 import { getApiUrl } from "@/lib/config";
-import { Mail, Trash2, Eye, Clock, Download } from "lucide-react";
+import { Mail, Trash2, Eye, Clock } from "lucide-react";
 import * as XLSX from 'xlsx';
+import { useAdminExport } from "@/context/AdminExportContext";
 
 interface Message {
   id: string;
@@ -21,6 +22,41 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const { registerExport, unregisterExport } = useAdminExport();
+
+  const exportToExcel = () => {
+    if (messages.length === 0) {
+      alert('No messages to export');
+      return;
+    }
+
+    // Prepare data for export
+    const exportData = messages.map(msg => ({
+      'Name': msg.name,
+      'Email': msg.email,
+      'Phone': msg.phone || 'N/A',
+      'Subject': msg.subject || 'No Subject',
+      'Message': msg.message,
+      'Status': msg.isRead ? 'Read' : 'Unread',
+      'Date': new Date(msg.createdAt).toLocaleString()
+    }));
+
+    // Create worksheet and workbook
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Messages');
+
+    // Generate file name with timestamp
+    const fileName = `messages_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Download file
+    XLSX.writeFile(wb, fileName);
+  };
+
+  useEffect(() => {
+    registerExport(exportToExcel, 'Export Messages');
+    return () => unregisterExport();
+  }, [messages, registerExport, unregisterExport]);
 
   useEffect(() => {
     fetchMessages();
@@ -78,30 +114,6 @@ export default function MessagesPage() {
     }
   };
 
-  const exportToExcel = () => {
-    // Prepare data for export
-    const exportData = messages.map(msg => ({
-      'Name': msg.name,
-      'Email': msg.email,
-      'Phone': msg.phone || 'N/A',
-      'Subject': msg.subject || 'No Subject',
-      'Message': msg.message,
-      'Status': msg.isRead ? 'Read' : 'Unread',
-      'Date': new Date(msg.createdAt).toLocaleString()
-    }));
-
-    // Create worksheet and workbook
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Messages');
-
-    // Generate file name with timestamp
-    const fileName = `messages_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-    // Download file
-    XLSX.writeFile(wb, fileName);
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -116,21 +128,9 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Messages</h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">View and respond to contact form submissions</p>
-          </div>
-          {messages.length > 0 && (
-            <button
-              onClick={exportToExcel}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors shadow-sm active:scale-95 touch-manipulation"
-            >
-              <Download className="w-5 h-5" />
-              <span className="hidden sm:inline">Export Excel</span>
-              <span className="sm:hidden">Export</span>
-            </button>
-          )}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Messages</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">View and respond to contact form submissions</p>
         </div>
 
         {messages.length === 0 ? (

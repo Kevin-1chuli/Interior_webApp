@@ -5,6 +5,8 @@ import { authenticatedFetch, getToken, isOwner as checkIsOwner } from "@/lib/aut
 import { getApiUrl } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Users as UsersIcon, Key, Eye, EyeOff } from "lucide-react";
+import * as XLSX from 'xlsx';
+import { useAdminExport } from "@/context/AdminExportContext";
 
 interface Staff {
   id: string;
@@ -27,6 +29,36 @@ export default function StaffPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const { registerExport, unregisterExport } = useAdminExport();
+
+  const exportToExcel = () => {
+    if (staff.length === 0) {
+      alert('No staff to export');
+      return;
+    }
+
+    const exportData = staff.map(member => ({
+      'Username': member.username,
+      'Email': member.email || 'N/A',
+      'Role': member.role,
+      'Date Created': new Date(member.createdAt).toLocaleString()
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Staff');
+    const fileName = `staff_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
+  useEffect(() => {
+    if (!checkIsOwner()) {
+      router.push("/admin/dashboard");
+      return;
+    }
+    registerExport(exportToExcel, 'Export Staff');
+    return () => unregisterExport();
+  }, [staff, router, registerExport, unregisterExport]);
 
   useEffect(() => {
     if (!checkIsOwner()) {

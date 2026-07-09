@@ -5,6 +5,8 @@ import Link from "next/link";
 import { fetchProducts, fetchProjects } from "@/lib/api";
 import { getApiUrl } from "@/lib/config";
 import { Sofa, Briefcase, Pencil, Mail, Plus, ArrowRight } from "lucide-react";
+import * as XLSX from 'xlsx';
+import { useAdminExport } from "@/context/AdminExportContext";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState([
@@ -13,6 +15,27 @@ export default function AdminDashboard() {
     { label: "Design Requests", value: "...", icon: Pencil, href: "/admin/design-requests", color: "amber", bgImage: null as string | null },
     { label: "Messages", value: "...", icon: Mail, href: "/admin/messages", color: "amber", bgImage: null as string | null },
   ]);
+  const { registerExport, unregisterExport } = useAdminExport();
+
+  const exportToExcel = () => {
+    // Export dashboard summary
+    const exportData = stats.map(stat => ({
+      'Metric': stat.label,
+      'Count': stat.value,
+      'Status': stat.value === '...' ? 'Loading' : 'Available'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Dashboard Summary');
+    const fileName = `dashboard_summary_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
+  useEffect(() => {
+    registerExport(exportToExcel, 'Export Dashboard Summary');
+    return () => unregisterExport();
+  }, [stats, registerExport, unregisterExport]);
 
   useEffect(() => {
     loadStats();

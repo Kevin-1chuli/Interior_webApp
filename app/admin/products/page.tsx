@@ -4,11 +4,42 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Search, Sofa, Trash2, Edit, Calendar } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
+import * as XLSX from 'xlsx';
+import { useAdminExport } from "@/context/AdminExportContext";
 
 export default function ProductsListPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const { registerExport, unregisterExport } = useAdminExport();
+
+  const exportToExcel = () => {
+    if (products.length === 0) {
+      alert('No products to export');
+      return;
+    }
+
+    const exportData = products.map(product => ({
+      'Name': product.name,
+      'Description': product.description || 'N/A',
+      'Price': product.price ? `$${product.price}` : 'N/A',
+      'Category': product.category,
+      'Stock': product.stock || 'N/A',
+      'Images': product.images?.join(', ') || 'No images',
+      'Date Added': new Date(product.createdAt).toLocaleString()
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Products');
+    const fileName = `products_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
+  useEffect(() => {
+    registerExport(exportToExcel, 'Export Products');
+    return () => unregisterExport();
+  }, [products, registerExport, unregisterExport]);
 
   useEffect(() => {
     fetchProducts();
