@@ -97,11 +97,11 @@ export function SectionHdr({ eyebrow, heading, sub, light, tight }: { eyebrow:st
   );
 }
 
-export function GoldBtn({ onClick, children, fullW }: { onClick?:()=>void; children:ReactNode; fullW?:boolean }) {
+export function GoldBtn({ onClick, children, fullW, disabled }: { onClick?:()=>void; children:ReactNode; fullW?:boolean; disabled?:boolean }) {
   const [h,setH] = useState(false);
   return (
-    <button onClick={onClick} className={fullW?"w-full":""} style={{ fontFamily:SANS, fontSize:"0.66rem", letterSpacing:"0.2em", textTransform:"uppercase", fontWeight:600, color:"white", padding:"0.95rem 2rem", backgroundColor:h?"#9a7a3a":GOLD, border:`2px solid ${h?"#9a7a3a":GOLD}`, borderRadius:2, transform:h?"translateY(-2px)":"translateY(0)", transition:`all 0.28s ${EASE_OUT}`, cursor:"pointer" }}
-      onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)}>
+    <button onClick={disabled ? undefined : onClick} disabled={disabled} className={fullW?"w-full":""} style={{ fontFamily:SANS, fontSize:"0.66rem", letterSpacing:"0.2em", textTransform:"uppercase", fontWeight:600, color:"white", padding:"0.95rem 2rem", backgroundColor:disabled?"#cccccc":(h?"#9a7a3a":GOLD), border:`2px solid ${disabled?"#cccccc":(h?"#9a7a3a":GOLD)}`, borderRadius:2, transform:disabled?"none":(h?"translateY(-2px)":"translateY(0)"), transition:`all 0.28s ${EASE_OUT}`, cursor:disabled?"not-allowed":"pointer", opacity:disabled?0.6:1 }}
+      onMouseEnter={()=>!disabled&&setH(true)} onMouseLeave={()=>setH(false)}>
       {children}
     </button>
   );
@@ -543,6 +543,51 @@ export function StatsStrip() {
 
 // ─── Contact ──────────────────────────────────────────────────────────────────
 export function ContactSection({ id }: { id?:string }) {
+  const [formData, setFormData] = useState({ name: "", phone: "", email: "", description: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.name.trim() || !formData.email.trim() || !formData.description.trim()) {
+      setMessage({ type: "error", text: "Please fill in all required fields" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/contact/design-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          projectType: "General Consultation",
+          description: formData.description,
+          budget: null,
+          location: null,
+          timeline: null
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setMessage({ type: "success", text: "Request sent successfully! We'll contact you within 10-30 minutes." });
+        setFormData({ name: "", phone: "", email: "", description: "" });
+      } else {
+        setMessage({ type: "error", text: data.message || "Failed to send request. Please try again." });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "Network error. Please check your connection and try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id={id} style={{ backgroundColor:"#111", paddingTop:80, paddingBottom:80 }}>
       <div className="max-w-5xl mx-auto" style={{ paddingInline:"clamp(1.5rem,5vw,4rem)" }}>
@@ -578,19 +623,62 @@ export function ContactSection({ id }: { id?:string }) {
           <div style={{ backgroundColor:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:12, padding:32 }}>
             <h3 style={{ fontFamily:DISPLAY, fontSize:"1.3rem", fontWeight:600, color:"white", marginBottom:20 }}>Request a Free Consultation</h3>
             <div className="space-y-4">
-              {[{ label:"Full Name", type:"text", ph:"e.g. Sarah Nakato" }, { label:"Phone / WhatsApp", type:"tel", ph:"+256 700 000 000" }, { label:"Email", type:"email", ph:"you@example.com" }].map(({label,type,ph})=>(
-                <div key={label}>
-                  <label style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", display:"block", marginBottom:6 }}>{label}</label>
-                  <input type={type} placeholder={ph} className="w-full px-4 py-3 rounded text-sm"
-                    style={{ fontFamily:BODY, backgroundColor:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"white", outline:"none", fontSize:"0.84rem" }} />
-                </div>
-              ))}
               <div>
-                <label style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", display:"block", marginBottom:6 }}>Tell us about your space</label>
-                <textarea rows={3} placeholder="e.g. Master bedroom, 4×5m, modern aesthetic..." className="w-full px-4 py-3 rounded resize-none"
-                  style={{ fontFamily:BODY, backgroundColor:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"white", outline:"none", fontSize:"0.82rem" }} />
+                <label style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", display:"block", marginBottom:6 }}>Full Name *</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Sarah Nakato" 
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded text-sm"
+                  style={{ fontFamily:BODY, backgroundColor:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"white", outline:"none", fontSize:"0.84rem" }} 
+                />
               </div>
-              <GoldBtn fullW>Send Request</GoldBtn>
+              <div>
+                <label style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", display:"block", marginBottom:6 }}>Phone / WhatsApp</label>
+                <input 
+                  type="tel" 
+                  placeholder="+256 700 000 000" 
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded text-sm"
+                  style={{ fontFamily:BODY, backgroundColor:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"white", outline:"none", fontSize:"0.84rem" }} 
+                />
+              </div>
+              <div>
+                <label style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", display:"block", marginBottom:6 }}>Email *</label>
+                <input 
+                  type="email" 
+                  placeholder="you@example.com" 
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded text-sm"
+                  style={{ fontFamily:BODY, backgroundColor:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"white", outline:"none", fontSize:"0.84rem" }} 
+                />
+              </div>
+              <div>
+                <label style={{ fontFamily:SANS, fontSize:"0.6rem", letterSpacing:"0.12em", textTransform:"uppercase", color:"rgba(255,255,255,0.45)", display:"block", marginBottom:6 }}>Tell us about your space *</label>
+                <textarea 
+                  rows={3} 
+                  placeholder="e.g. Master bedroom, 4×5m, modern aesthetic..." 
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 rounded resize-none"
+                  style={{ fontFamily:BODY, backgroundColor:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"white", outline:"none", fontSize:"0.82rem" }} 
+                />
+              </div>
+              {message && (
+                <div style={{ padding: "12px 16px", borderRadius: 6, backgroundColor: message.type === "success" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)", border: `1px solid ${message.type === "success" ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}` }}>
+                  <p style={{ fontFamily: BODY, fontSize: "0.82rem", color: message.type === "success" ? "#10b981" : "#ef4444" }}>{message.text}</p>
+                </div>
+              )}
+              <GoldBtn fullW onClick={handleSubmit}>
+                {isSubmitting ? "Sending..." : "Send Request"}
+              </GoldBtn>
             </div>
           </div>
         </div>
@@ -1477,8 +1565,12 @@ export function InteriorDesignPage({ onNavigate }: { onNavigate: (p: string) => 
     style: "",
     budget: "",
     phone: "",
+    name: "",
+    email: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const SERVICE_TYPES = [
     { id: "renovation", label: "Renovation", desc: "Transform your existing space" },
@@ -1506,9 +1598,53 @@ export function InteriorDesignPage({ onNavigate }: { onNavigate: (p: string) => 
     }
   };
 
-  const handleSubmit = () => {
-    console.log("Form submitted:", formData);
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+      setError("Please provide your name, email, and phone number");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Construct description from form data
+      const description = `
+Service: ${formData.service || 'Not specified'}
+Style: ${formData.style || 'Not specified'}
+Budget: ${formData.budget || 'Not specified'}
+${formData.photo ? 'Photo: Uploaded' : 'Photo: Not uploaded'}
+      `.trim();
+
+      const response = await fetch("/api/contact/design-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          projectType: formData.service || "Interior Design",
+          description: description,
+          budget: formData.budget || null,
+          location: null,
+          timeline: null
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSubmitted(true);
+      } else {
+        setError(data.message || "Failed to submit request. Please try again.");
+      }
+    } catch (err) {
+      console.error("Submit error:", err);
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canProceed = () => {
@@ -1516,7 +1652,7 @@ export function InteriorDesignPage({ onNavigate }: { onNavigate: (p: string) => 
     if (step === 2) return formData.service !== "";
     if (step === 3) return formData.style !== "";
     if (step === 4) return true;
-    if (step === 5) return formData.phone !== "";
+    if (step === 5) return formData.phone !== "" && formData.name !== "" && formData.email !== "";
     return false;
   };
 
@@ -1535,7 +1671,7 @@ export function InteriorDesignPage({ onNavigate }: { onNavigate: (p: string) => 
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
             <GoldBtn onClick={() => onNavigate("projects")}>View Our Projects</GoldBtn>
-            <OutlineBtn onClick={() => { setSubmitted(false); setStep(1); setFormData({ photo: null, service: "", style: "", budget: "", phone: "" }); }} dark>
+            <OutlineBtn onClick={() => { setSubmitted(false); setStep(1); setFormData({ photo: null, service: "", style: "", budget: "", phone: "", name: "", email: "" }); setError(null); }} dark>
               Submit Another
             </OutlineBtn>
           </div>
@@ -1737,23 +1873,67 @@ export function InteriorDesignPage({ onNavigate }: { onNavigate: (p: string) => 
                 <p style={{ fontFamily: BODY, fontSize: "0.95rem", color: MID, lineHeight: 1.7, marginBottom: 30 }}>
                   We'll contact you within 10–30 minutes.
                 </p>
-                <input
-                  type="tel"
-                  placeholder="07XX XXX XXX"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: 16,
-                    borderRadius: 12,
-                    fontFamily: BODY,
-                    fontSize: "1rem",
-                    border: `2px solid rgba(0,0,0,0.1)`,
-                    outline: "none",
-                  }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)")}
-                />
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    disabled={isSubmitting}
+                    style={{
+                      width: "100%",
+                      padding: 16,
+                      borderRadius: 12,
+                      fontFamily: BODY,
+                      fontSize: "1rem",
+                      border: `2px solid rgba(0,0,0,0.1)`,
+                      outline: "none",
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)")}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    disabled={isSubmitting}
+                    style={{
+                      width: "100%",
+                      padding: 16,
+                      borderRadius: 12,
+                      fontFamily: BODY,
+                      fontSize: "1rem",
+                      border: `2px solid rgba(0,0,0,0.1)`,
+                      outline: "none",
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)")}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="07XX XXX XXX"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    disabled={isSubmitting}
+                    style={{
+                      width: "100%",
+                      padding: 16,
+                      borderRadius: 12,
+                      fontFamily: BODY,
+                      fontSize: "1rem",
+                      border: `2px solid rgba(0,0,0,0.1)`,
+                      outline: "none",
+                    }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = GOLD)}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)")}
+                  />
+                  {error && (
+                    <div style={{ padding: "12px 16px", borderRadius: 8, backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                      <p style={{ fontFamily: BODY, fontSize: "0.85rem", color: "#dc2626" }}>{error}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1769,8 +1949,8 @@ export function InteriorDesignPage({ onNavigate }: { onNavigate: (p: string) => 
                   {step === 4 ? "Skip & Continue" : "Continue"} <ArrowRight size={16} style={{ marginLeft: 8, display: "inline" }} />
                 </GoldBtn>
               ) : (
-                <GoldBtn onClick={handleSubmit} fullW>
-                  Submit Request
+                <GoldBtn onClick={handleSubmit} fullW disabled={isSubmitting || !canProceed()}>
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
                 </GoldBtn>
               )}
             </div>
