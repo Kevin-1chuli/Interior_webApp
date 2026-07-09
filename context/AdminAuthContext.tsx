@@ -8,7 +8,7 @@ interface User {
   id: string;
   username: string;
   email: string | null;
-  role: 'OWNER' | 'STAFF';
+  role: 'MANAGER' | 'STAFF';
 }
 
 interface AdminAuthContextValue {
@@ -18,7 +18,7 @@ interface AdminAuthContextValue {
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   token: string | null;
-  isOwner: boolean;
+  isManager: boolean;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null);
@@ -85,10 +85,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/admin/login");
   }, [router]);
 
-  const isOwner = user?.role === 'OWNER';
+  const isManager = user?.role === 'MANAGER';
 
   return (
-    <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout, token, isOwner }}>
+    <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout, token, isManager }}>
       {children}
     </AdminAuthContext.Provider>
   );

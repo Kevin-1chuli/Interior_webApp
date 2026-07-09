@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { isAuthenticated, isOwner as checkIsOwner } from "@/lib/auth";
+import { isAuthenticated, isManager as checkIsManager } from "@/lib/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requireOwner?: boolean;
+  requireManager?: boolean;
 }
 
-export default function ProtectedRoute({ children, requireOwner = false }: ProtectedRouteProps) {
+export default function ProtectedRoute({ children, requireManager = false }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
@@ -30,14 +30,14 @@ export default function ProtectedRoute({ children, requireOwner = false }: Prote
       return;
     }
 
-    // Check owner role if required
-    if (requireOwner && !checkIsOwner()) {
+    // Check manager role if required
+    if (requireManager && !checkIsManager()) {
       router.push("/admin/dashboard");
       return;
     }
 
     setIsChecking(false);
-  }, [pathname, router, requireOwner]);
+  }, [pathname, router, requireManager]);
 
   // Show loading state while checking
   if (isChecking) {

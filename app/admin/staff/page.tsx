@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { authenticatedFetch, getToken, isOwner as checkIsOwner } from "@/lib/auth";
+import { authenticatedFetch, getToken, isManager as checkIsManager } from "@/lib/auth";
 import { getApiUrl } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Users as UsersIcon, Key, Eye, EyeOff } from "lucide-react";
@@ -52,7 +52,7 @@ export default function StaffPage() {
   };
 
   useEffect(() => {
-    if (!checkIsOwner()) {
+    if (!checkIsManager()) {
       router.push("/admin/dashboard");
       return;
     }
@@ -61,7 +61,7 @@ export default function StaffPage() {
   }, [staff, router, registerExport, unregisterExport]);
 
   useEffect(() => {
-    if (!checkIsOwner()) {
+    if (!checkIsManager()) {
       router.push("/admin/dashboard");
       return;
     }
@@ -168,7 +168,7 @@ export default function StaffPage() {
     }
   };
 
-  if (!checkIsOwner()) return null;
+  if (!checkIsManager()) return null;
 
   if (isLoading) {
     return (

@@ -6,17 +6,17 @@ import {
   updateCategory, 
   deleteCategory 
 } from '../controllers/categories.controller';
-import { authenticate } from '../middleware/auth.middleware';
+import { authenticate, requireManager } from '../middleware/auth.middleware';
 
 const router = Router();
 
 // Public routes
 router.get('/', getCategories);
 
-// Admin routes (protected)
-router.get('/:id', authenticate, getCategory);
-router.post('/', authenticate, createCategory);
-router.put('/:id', authenticate, updateCategory);
-router.delete('/:id', authenticate, deleteCategory);
+// Manager-only routes
+router.get('/:id', authenticate, requireManager, getCategory);
+router.post('/', authenticate, requireManager, createCategory);
+router.put('/:id', authenticate, requireManager, updateCategory);
+router.delete('/:id', authenticate, requireManager, deleteCategory);
 
 export default router;

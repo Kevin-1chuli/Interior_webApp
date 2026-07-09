@@ -6,21 +6,21 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database...');
 
-  // Create owner user
+  // Create manager user
   const hashedPassword = await bcrypt.hash('ngb2024', 10);
   
-  const owner = await prisma.user.upsert({
+  const manager = await prisma.user.upsert({
     where: { username: 'admin' },
-    update: { role: 'OWNER' }, // Update existing admin to OWNER
+    update: { role: 'MANAGER' }, // Update existing admin to MANAGER
     create: {
       username: 'admin',
       password: hashedPassword,
       email: 'admin@ngbinterior.com',
-      role: 'OWNER'
+      role: 'MANAGER'
     }
   });
 
-  console.log('✓ Owner account created:', owner.username, `(${owner.role})`);
+  console.log('✓ Manager account created:', manager.username, `(${manager.role})`);
 
   // Optional: Create sample products
   const sampleProducts = [
@@ -84,10 +84,10 @@ async function main() {
 
   console.log('✓ Sample project created');
   console.log('\n✓ Database seeded successfully!');
-  console.log('\nOwner credentials:');
+  console.log('\nManager credentials:');
   console.log('Username: admin');
   console.log('Password: ngb2024');
-  console.log('Role: OWNER');
+  console.log('Role: MANAGER');
 }
 
 main()

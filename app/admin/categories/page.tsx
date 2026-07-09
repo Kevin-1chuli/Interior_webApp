@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, FolderTree, Eye, EyeOff, Save, X } from "lucide-react";
 import { getApiUrl } from "@/lib/config";
-import { authenticatedFetch, isOwner as checkIsOwner } from "@/lib/auth";
+import { authenticatedFetch, isManager as checkIsManager } from "@/lib/auth";
 import * as XLSX from 'xlsx';
 import { useAdminExport } from "@/context/AdminExportContext";
 
@@ -29,7 +29,7 @@ export default function CategoriesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const isOwner = checkIsOwner();
+  const isManager = checkIsManager();
   const { registerExport, unregisterExport } = useAdminExport();
 
   const [formData, setFormData] = useState({

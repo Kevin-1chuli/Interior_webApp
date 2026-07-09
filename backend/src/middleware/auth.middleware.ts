@@ -31,8 +31,8 @@ export const authenticate = (
   }
 };
 
-// Middleware to check if user is OWNER
-export const requireOwner = (
+// Middleware to check if user is MANAGER
+export const requireManager = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -41,10 +41,10 @@ export const requireOwner = (
     return res.status(401).json({ success: false, message: 'Authentication required' });
   }
 
-  if (req.user.role !== 'OWNER') {
+  if (req.user.role !== 'MANAGER') {
     return res.status(403).json({ 
       success: false, 
-      message: 'Access denied. Owner role required.' 
+      message: 'Access denied. Manager role required.' 
     });
   }
 

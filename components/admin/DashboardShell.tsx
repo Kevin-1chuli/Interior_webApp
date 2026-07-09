@@ -16,7 +16,7 @@ import {
   Download,
   FolderTree
 } from "lucide-react";
-import { getUser, clearAuth, isOwner as checkIsOwner } from "@/lib/auth";
+import { getUser, clearAuth, isManager as checkIsManager } from "@/lib/auth";
 import { useAdminExport } from "@/context/AdminExportContext";
 
 interface DashboardShellProps {
@@ -27,7 +27,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: any;
-  ownerOnly?: boolean;
+  managerOnly?: boolean;
 }
 
 export default function DashboardShell({ children }: DashboardShellProps) {
@@ -35,7 +35,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const [user, setUser] = useState(getUser());
   const router = useRouter();
   const pathname = usePathname();
-  const isOwner = checkIsOwner();
+  const isManager = checkIsManager();
   const { exportFunction, exportLabel } = useAdminExport();
 
   useEffect(() => {
@@ -57,12 +57,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
     { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { label: "Products", href: "/admin/products", icon: Package },
     { label: "Projects", href: "/admin/projects", icon: Briefcase },
-    { label: "Categories", href: "/admin/categories", icon: FolderTree },
+    { label: "Categories", href: "/admin/categories", icon: FolderTree, managerOnly: true },
     { label: "Messages", href: "/admin/messages", icon: Mail },
-    { label: "Staff", href: "/admin/staff", icon: Users, ownerOnly: true },
+    { label: "Staff", href: "/admin/staff", icon: Users, managerOnly: true },
   ];
 
-  const visibleNavItems = navItems.filter(item => !item.ownerOnly || isOwner);
+  const visibleNavItems = navItems.filter(item => !item.managerOnly || isManager);
 
   return (
     <div className="min-h-screen bg-gray-50">

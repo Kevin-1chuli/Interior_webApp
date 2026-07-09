@@ -5,7 +5,7 @@ export interface User {
   id: string;
   username: string;
   email: string | null;
-  role: 'OWNER' | 'STAFF';
+  role: 'MANAGER' | 'STAFF';
 }
 
 export interface AuthResponse {
@@ -70,11 +70,11 @@ export function isAuthenticated(): boolean {
 }
 
 /**
- * Check if user has OWNER role
+ * Check if user has MANAGER role
  */
-export function isOwner(): boolean {
+export function isManager(): boolean {
   const user = getUser();
-  return user?.role === 'OWNER';
+  return user?.role === 'MANAGER';
 }
 
 /**

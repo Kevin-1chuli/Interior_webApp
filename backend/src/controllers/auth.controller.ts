@@ -56,7 +56,7 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-// Create staff (OWNER only)
+// Create staff (MANAGER only)
 export const createStaff = async (req: AuthRequest, res: Response) => {
   try {
     const { username, password, email } = req.body;
@@ -127,7 +127,7 @@ export const createStaff = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Get all staff (OWNER only)
+// Get all staff (MANAGER only)
 export const getStaff = async (req: AuthRequest, res: Response) => {
   try {
     const staff = await prisma.user.findMany({
@@ -152,7 +152,7 @@ export const getStaff = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Reset staff password (OWNER only)
+// Reset staff password (MANAGER only)
 export const resetStaffPassword = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -171,8 +171,8 @@ export const resetStaffPassword = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.role === 'OWNER') {
-      return res.status(403).json({ success: false, message: 'Cannot reset owner password' });
+    if (user.role === 'MANAGER') {
+      return res.status(403).json({ success: false, message: 'Cannot reset manager password' });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -195,19 +195,19 @@ export const resetStaffPassword = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Delete staff (OWNER only)
+// Delete staff (MANAGER only)
 export const deleteStaff = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Prevent deleting owner accounts
+    // Prevent deleting manager accounts
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.role === 'OWNER') {
-      return res.status(403).json({ success: false, message: 'Cannot delete owner account' });
+    if (user.role === 'MANAGER') {
+      return res.status(403).json({ success: false, message: 'Cannot delete manager account' });
     }
 
     await prisma.user.delete({ where: { id } });

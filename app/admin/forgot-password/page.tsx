@@ -20,16 +20,16 @@ export default function ForgotPasswordPage() {
               <strong>For Staff Members:</strong>
             </p>
             <p className="text-sm text-amber-800">
-              Please contact the owner to reset your password. They can generate a new temporary password for you through the Staff Management page.
+              Please contact the manager to reset your password. They can generate a new temporary password for you through the Staff Management page.
             </p>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <p className="text-sm text-blue-900 mb-4">
-              <strong>For Account Owners:</strong>
+              <strong>For Account Managers:</strong>
             </p>
             <p className="text-sm text-blue-800">
-              If you've lost access to your owner account, please contact technical support at:
+              If you've lost access to your manager account, please contact technical support at:
             </p>
             <p className="text-sm font-medium text-blue-900 mt-2">
               support@ngbinterior.com
