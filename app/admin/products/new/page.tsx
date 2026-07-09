@@ -1,17 +1,28 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getApiUrl } from "@/lib/config";
 
+interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  isActive: boolean;
+}
+
 export default function NewProductPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     category: "",
+    categoryId: "",
     price: "",
     materials: "",
     dimensions: "",
@@ -19,14 +30,50 @@ export default function NewProductPage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
-  const categories = [
-    { id: "beds", label: "Beds" },
-    { id: "sofas", label: "Sofas" },
-    { id: "wardrobes", label: "Wardrobes" },
-    { id: "tv-units", label: "TV Units" },
-    { id: "dining", label: "Dining" },
-    { id: "coffee-tables", label: "Coffee Tables" },
-  ];
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      setCategoriesError("");
+      
+      const response = await fetch(getApiUrl('categories'));
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to load categories');
+      }
+
+      // Only show active categories
+      const activeCategories = data.data.filter((cat: Category) => cat.isActive);
+      setCategories(activeCategories);
+    } catch (error: any) {
+      console.error('Failed to fetch categories:', error);
+      setCategoriesError(error.message || 'Failed to load categories');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCategory = categories.find(cat => cat.id === e.target.value);
+    if (selectedCategory) {
+      setFormData({
+        ...formData,
+        category: selectedCategory.slug,
+        categoryId: selectedCategory.id
+      });
+    } else {
+      setFormData({
+        ...formData,
+        category: "",
+        categoryId: ""
+      });
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -42,7 +89,7 @@ export default function NewProductPage() {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("admin_token");
+      const token = localStorage.getItem("ngb_admin_token");
       if (!token) {
         alert("Please login first");
         router.push("/admin/login");
@@ -53,7 +100,10 @@ export default function NewProductPage() {
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('category', formData.category);
+      formDataToSend.append('category', formData.category); // Slug for backward compatibility
+      if (formData.categoryId) {
+        formDataToSend.append('categoryId', formData.categoryId); // ID for new relation
+      }
       formDataToSend.append('price', formData.price);
       formDataToSend.append('currency', 'UGX');
       formDataToSend.append('dimensions', formData.dimensions);
@@ -145,17 +195,42 @@ export default function NewProductPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category <span className="text-red-500">*</span>
               </label>
-              <select
-                required
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
-              >
-                <option value="">Select a category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.label}</option>
-                ))}
-              </select>
+              {categoriesLoading ? (
+                <div className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                  Loading categories...
+                </div>
+              ) : categoriesError ? (
+                <div>
+                  <div className="w-full px-4 py-2 border border-red-300 rounded-md bg-red-50 text-red-700 text-sm">
+                    {categoriesError}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={fetchCategories}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-700 underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <select
+                  required
+                  value={formData.categoryId}
+                  onChange={handleCategoryChange}
+                  disabled={isSubmitting || categories.length === 0}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none disabled:bg-gray-50 disabled:text-gray-500"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              )}
+              {categories.length === 0 && !categoriesLoading && !categoriesError && (
+                <p className="text-sm text-gray-500 mt-1">
+                  No categories available. <Link href="/admin/categories" className="text-blue-600 hover:underline">Create one</Link>
+                </p>
+              )}
             </div>
 
             <div>

@@ -67,6 +67,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       name,
       description,
       category,
+      categoryId,
       price,
       currency = 'UGX',
       materials,
@@ -116,6 +117,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
         name,
         description: description || null,
         category,
+        categoryId: categoryId || null, // Set categoryId if provided
         price: parseFloat(price),
         currency,
         images: imageUrls,
