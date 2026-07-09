@@ -90,9 +90,9 @@ export const HERO_SLIDES = [
 
 export const SVC_CARDS = [
   { title:"Furniture",        sub:"Handcrafted for your space",     pid:"1646987916641-1f3c8992daa2", nav:"furniture" },
-  { title:"Interior Design",  sub:"Complete room transformations",  pid:"1648881806148-e5c51179c826", nav:"contact" },
+  { title:"Interior Design",  sub:"Complete room transformations",  pid:"1648881806148-e5c51179c826", nav:"interior-design" },
   { title:"Custom Pieces",    sub:"Built to your exact vision",     pid:"1547609434-b732edfee020",   nav:"contact" },
-  { title:"Projects",         sub:"Start to installation",          pid:"1608303588026-884930af2559", nav:"contact" },
+  { title:"Projects",         sub:"Start to installation",          pid:"1608303588026-884930af2559", nav:"projects" },
 ];
 
 export const JOURNEY = [
