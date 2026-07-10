@@ -2,6 +2,7 @@ import { Response } from 'express';
 import prisma from '../prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import cloudinary from '../config/cloudinary';
+import { deleteImagesFromCloudinary, getRemovedImages } from '../utils/cloudinary.helper';
 
 // Sanitize filename for Cloudinary public_id
 const sanitizeFilename = (filename: string): string => {
@@ -182,9 +183,42 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
+    // Fetch product to get images before deletion
+    const product = await prisma.product.findUnique({
+      where: { id }
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Delete product from database first
     await prisma.product.delete({
       where: { id }
     });
+
+    // Delete all product images from Cloudinary (non-blocking)
+    const productImages = (product.images as string[]) || [];
+    if (productImages.length > 0) {
+      console.log(`[Product Delete] Scheduling deletion of ${productImages.length} image(s) from Cloudinary`);
+      
+      // Fire and forget - don't block the response
+      deleteImagesFromCloudinary(productImages)
+        .then((result) => {
+          if (result.success.length > 0) {
+            console.log(`[Product Delete] Successfully deleted ${result.success.length} image(s) from Cloudinary`);
+          }
+          if (result.failed.length > 0) {
+            console.error(`[Product Delete] Failed to delete ${result.failed.length} image(s) from Cloudinary:`, result.failed);
+          }
+        })
+        .catch((error) => {
+          console.error('[Product Delete] Unexpected error during Cloudinary cleanup:', error);
+        });
+    }
 
     res.json({
       success: true,
@@ -240,7 +274,7 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Parse existing images
+    // Parse existing images (images that user kept)
     let imageUrls: string[] = [];
     if (existingImages) {
       try {
@@ -271,7 +305,34 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Update product
+    // Determine which images were removed
+    const oldImages = (existingProduct.images as string[]) || [];
+    const removedImages = getRemovedImages(oldImages, imageUrls);
+
+    // Delete removed images from Cloudinary (non-blocking)
+    // This happens asynchronously - we don't wait for it to complete
+    // If deletion fails, we still proceed with the database update
+    if (removedImages.length > 0) {
+      console.log(`[Product Update] Scheduling deletion of ${removedImages.length} removed image(s)`);
+      
+      // Fire and forget - don't block the update
+      deleteImagesFromCloudinary(removedImages)
+        .then((result) => {
+          if (result.success.length > 0) {
+            console.log(`[Product Update] Successfully deleted ${result.success.length} image(s) from Cloudinary`);
+          }
+          if (result.failed.length > 0) {
+            console.error(`[Product Update] Failed to delete ${result.failed.length} image(s) from Cloudinary:`, result.failed);
+          }
+        })
+        .catch((error) => {
+          console.error('[Product Update] Unexpected error during Cloudinary cleanup:', error);
+        });
+    } else {
+      console.log('[Product Update] No images removed, skipping Cloudinary cleanup');
+    }
+
+    // Update product in database
     const product = await prisma.product.update({
       where: { id },
       data: {
