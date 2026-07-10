@@ -253,7 +253,10 @@ export function CategorySlider({ catId, bg, fav, onFav, onNavigate, onView, prod
   catId:CatId; bg?:string; fav:Set<number>; onFav:(id:number)=>void; onNavigate:(p:string)=>void; onView:(p:Prod)=>void; products?:Record<CatId, Prod[]>; categoryName?:string;
 }) {
   const name = categoryName || catId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  const products = allProducts ? allProducts[catId] : PRODS[catId] || [];
+  // FIX: Don't fall back to PRODS - use dynamic products from API
+  // If allProducts exists, get products for this category (or empty array)
+  // If allProducts doesn't exist, use PRODS fallback for backward compatibility
+  const products = allProducts ? (allProducts[catId] || []) : (PRODS[catId] || []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
