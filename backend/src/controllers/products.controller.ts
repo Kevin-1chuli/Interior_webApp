@@ -103,11 +103,58 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       dimensions
     } = req.body;
 
-    if (!name || !category || !price) {
+    if (!name || !price) {
       return res.status(400).json({
         success: false,
-        message: 'Name, category, and price are required'
+        message: 'Name and price are required'
       });
+    }
+
+    // Ensure both category fields are synchronized
+    let finalCategoryId = categoryId;
+    let finalCategorySlug = category;
+
+    if (categoryId && !category) {
+      // Has categoryId but no slug - fetch slug from database
+      const cat = await prisma.category.findUnique({ where: { id: categoryId } });
+      if (cat) {
+        finalCategorySlug = cat.slug;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid categoryId - category not found'
+        });
+      }
+    } else if (category && !categoryId) {
+      // Has slug but no categoryId - fetch categoryId from database
+      const cat = await prisma.category.findUnique({ where: { slug: category } });
+      if (cat) {
+        finalCategoryId = cat.id;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid category slug "${category}" - category not found`
+        });
+      }
+    } else if (!category && !categoryId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category is required (provide either category slug or categoryId)'
+      });
+    } else {
+      // Both provided - verify they match
+      const cat = await prisma.category.findUnique({ where: { id: categoryId } });
+      if (!cat) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid categoryId - category not found'
+        });
+      }
+      if (cat.slug !== category) {
+        // Use categoryId as source of truth
+        console.warn(`Category mismatch: slug="${category}" but categoryId maps to "${cat.slug}". Using categoryId.`);
+        finalCategorySlug = cat.slug;
+      }
     }
 
     // Parse materials if it's a JSON string
@@ -145,8 +192,8 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       data: {
         name,
         description: description || null,
-        category,
-        categoryId: categoryId || null, // Set categoryId if provided
+        category: finalCategorySlug, // Always set both fields
+        categoryId: finalCategoryId, // Always set both fields
         price: parseFloat(price),
         currency,
         images: imageUrls,
@@ -260,6 +307,55 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Ensure both category fields are synchronized if category is being updated
+    let finalCategoryId = categoryId;
+    let finalCategorySlug = category;
+
+    // If category info is provided, validate and sync
+    if (categoryId || category) {
+      if (categoryId && !category) {
+        // Has categoryId but no slug - fetch slug
+        const cat = await prisma.category.findUnique({ where: { id: categoryId } });
+        if (cat) {
+          finalCategorySlug = cat.slug;
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid categoryId - category not found'
+          });
+        }
+      } else if (category && !categoryId) {
+        // Has slug but no categoryId - fetch categoryId
+        const cat = await prisma.category.findUnique({ where: { slug: category } });
+        if (cat) {
+          finalCategoryId = cat.id;
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: `Invalid category slug "${category}" - category not found`
+          });
+        }
+      } else if (category && categoryId) {
+        // Both provided - verify they match
+        const cat = await prisma.category.findUnique({ where: { id: categoryId } });
+        if (!cat) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid categoryId - category not found'
+          });
+        }
+        if (cat.slug !== category) {
+          // Use categoryId as source of truth
+          console.warn(`Category mismatch: slug="${category}" but categoryId maps to "${cat.slug}". Using categoryId.`);
+          finalCategorySlug = cat.slug;
+        }
+      }
+    } else {
+      // No category update - use existing
+      finalCategoryId = existingProduct.categoryId;
+      finalCategorySlug = existingProduct.category;
+    }
+
     // Parse materials if it's a JSON string
     let materialsArray: string[] = [];
     if (materials) {
@@ -310,12 +406,9 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
     const removedImages = getRemovedImages(oldImages, imageUrls);
 
     // Delete removed images from Cloudinary (non-blocking)
-    // This happens asynchronously - we don't wait for it to complete
-    // If deletion fails, we still proceed with the database update
     if (removedImages.length > 0) {
       console.log(`[Product Update] Scheduling deletion of ${removedImages.length} removed image(s)`);
       
-      // Fire and forget - don't block the update
       deleteImagesFromCloudinary(removedImages)
         .then((result) => {
           if (result.success.length > 0) {
@@ -338,8 +431,8 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       data: {
         name: name || existingProduct.name,
         description: description !== undefined ? description : existingProduct.description,
-        category: category || existingProduct.category,
-        categoryId: categoryId !== undefined ? categoryId : existingProduct.categoryId,
+        category: finalCategorySlug, // Always sync
+        categoryId: finalCategoryId, // Always sync
         price: price ? parseFloat(price) : existingProduct.price,
         currency: currency || existingProduct.currency,
         images: imageUrls.length > 0 ? imageUrls : (existingProduct.images as any),
